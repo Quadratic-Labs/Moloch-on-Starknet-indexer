@@ -10,6 +10,7 @@ from indexer.indexer import run_indexer
 
 DEFAULT_MONGO_URL = "mongodb://apibara:apibara@localhost:27018"
 DEFAULT_APIBARA_SERVER_URL = "goerli.starknet.stream.apibara.com"
+DEFAULT_APIBARA_SERVER_URL = "localhost:7171"
 
 
 def async_command(f):

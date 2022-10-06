@@ -102,7 +102,7 @@ async def run_indexer(server_url=None, mongo_url=None, restart: bool = False):
     runner = IndexerRunner(
         config=IndexerRunnerConfiguration(
             apibara_url=server_url,
-            apibara_ssl=True,
+            apibara_ssl=False,
             storage_url=mongo_url,
         ),
         reset_state=restart,

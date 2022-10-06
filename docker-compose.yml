@@ -2,7 +2,7 @@ version: "3"
 
 services:
   mongo:
-    image: mongo:latest
+    image: mongo:6.0.2
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: apibara
@@ -13,7 +13,7 @@ services:
       - ./_docker/apibara_mongodb:/data/db
 
   mongo-express:
-    image: mongo-express
+    image: mongo-express:0.54.0
     ports:
       - 8082:8081
     environment:
@@ -25,3 +25,23 @@ services:
       ME_CONFIG_MONGODB_ADMINPASSWORD: apibara
     depends_on:
       - mongo
+
+  apibara:
+    # image: apibara/apibara:0.3.3
+    image: apibara/starknet:ffbe469b2dadee8f5e3c11d35ee8b0f81915c63a
+    restart: always
+    command: apibara-starknet start --custom-network http://devnet:5050 # --config /usr/etc/apibara/configuration.toml
+    ports:
+      - 7171:7171
+    environment:
+      RUST_LOG: "apibara=debug"
+      RUST_BACKTRACE: 1
+    depends_on:
+      - devnet
+    # volumes:
+    #   - ./apibara:/usr/etc/apibara
+
+  devnet:
+    image: shardlabs/starknet-devnet:latest
+    ports:
+      - 5050:5050
