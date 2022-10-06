@@ -74,7 +74,7 @@ query Monitoring {
   }
   bank {
     total_shares # We can also make it a separate query/field
-    token_balances {
+    balances {
       name
       amount
       price
@@ -97,7 +97,7 @@ query Profile {
     loot
     percentage_of_bank
     voting_power
-    token_balances {
+    balances {
       address
       name
       amount

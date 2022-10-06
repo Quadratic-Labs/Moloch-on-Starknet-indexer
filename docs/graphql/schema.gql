@@ -15,8 +15,7 @@ type Bank {
   total_shares: Int
   total_loot: Int
   total_value: Int # Present in the mapping Excel but not the front end spec
-  token_balances: [TokenBalance]
-  whitelisted_tokens: [Address] # Isn't this the same as the tokens present in the token_balances list ?
+  balances: [TokenBalance]
 }
 
 type Member {
@@ -24,19 +23,20 @@ type Member {
   delegate_key: Address
   shares: Int
   loot: Int
-  token_balances: [TokenBalance] # same as the bank's but amount = percentage_of_bank * bank_amount
+  balances: [TokenBalance] # same as the bank's but amount = percentage_of_bank * bank_amount
+
   # Not used in the front end spec
-  # withdraw_token_balances: [TokenBalance] # Empty unless the member ragequit (or kicked ?) so that he can withdraw them
+  personal_balances: [TokenBalance] # Empty unless the member ragequit (or kicked ?) so that he can withdraw them
   roles: [String]
 
   # calculated
   # join_date: Date # I added this, it's not present in the front end spec
   # AK: said it's not important for the moment, just skip it
   percentage_of_bank: Int # total_shares + total_loot / shares + loot
-  voting_power: Int # total_shares / shares
+  voting_weight: Int # total_shares / shares
 }
 
-enum Status {
+enum ProposalStatus {
   SUBMITTED
   ACCEPTED # Can proceed to execution if any actions
   # The remaining states are final
@@ -48,7 +48,7 @@ enum Status {
   NOTFOUND
 }
 
-enum StatusFront {
+enum ProposalStatusFront {
   VOTING_PERIOD
   GRACE_PERIOD
   TO_PROCESS
@@ -68,7 +68,7 @@ enum ProposalType {
 type Proposal {
   id: ID
   type: ProposalType
-  title: string
+  title: String
   link: String
   submitted_by: Member
   submitted_at: Date
@@ -77,7 +77,7 @@ type Proposal {
 
   # Do we need to expose this alongside the StatusFront ?
   # They are not used anywhere in the front end spec
-  status: Status
+  status: ProposalStatus
   description: String
 
   # ProposalParams
@@ -88,7 +88,7 @@ type Proposal {
 
   # calculated
   active: Boolean
-  status_front: StatusFront
+  status_front: ProposalStatusFront
   time_remaining: Int
   current_majority: Int # yes_votes / (yes_votes + no_votes)
   current_quorum: Int # (yes_votes + no votes) / total_shares
@@ -121,7 +121,7 @@ type UnWhiteList implements Proposal {
 type Swap implements Proposal {
   tribute_address: Address
   tribute_offered: Int
-  payment_requested: Address
+  payment_address: Address
   payment_requested: Int
 }
 
@@ -133,7 +133,7 @@ enum OrderDirection {
 type Query {
   # default value is null by default ?
   proposals(
-    status: StatusFront
+    status: ProposalStatusFront
     order_by: String
     order_direction: OrderDirection
   ): [Proposal]
