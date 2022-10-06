@@ -27,6 +27,9 @@ transfer_abi = {
     ],
 }
 
+# TODO: data_transformer.py:498: UserWarning: DataTransformer is deprecated. Use FunctionCallSerializer instead
+#  warnings.warn("DataTransformer is deprecated. Use FunctionCallSerializer instead")
+# Also, check nftmeow-backend, they don't use it
 transfer_decoder = DataTransformer(
     abi=transfer_abi,
     identifier_manager=identifier_manager_from_abi([transfer_abi, uint256_abi]),
