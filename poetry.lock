@@ -56,7 +56,7 @@ trio = ["trio (>=0.16)"]
 
 [[package]]
 name = "apibara"
-version = "0.5.4"
+version = "0.5.5"
 description = "Apibara cliend SDK. Build web3-powered applications."
 category = "main"
 optional = false
@@ -1430,8 +1430,8 @@ anyio = [
     {file = "anyio-3.6.1.tar.gz", hash = "sha256:413adf95f93886e442aea925f3ee43baa5a765a64a0f52c6081894f9992fdd0b"},
 ]
 apibara = [
-    {file = "apibara-0.5.4-py3-none-any.whl", hash = "sha256:93dc11e496a9422b270292a1e91563acb47e7bceeb5f0cd532b23cfbac025b6a"},
-    {file = "apibara-0.5.4.tar.gz", hash = "sha256:2709d2f8a5bcec116f9a1a82282a3e69dd08ee671e677978c534a9dba39ac797"},
+    {file = "apibara-0.5.5-py3-none-any.whl", hash = "sha256:ce25b8ce5968445a147d3e19c2936d873b64d22a90fd0e3f3b3bea75b819ea87"},
+    {file = "apibara-0.5.5.tar.gz", hash = "sha256:bcfa9d4e9847017e0d8f9a3fdba0743deb95eaa3ef3ab636138a610a678d60c2"},
 ]
 asgiref = [
     {file = "asgiref-3.5.2-py3-none-any.whl", hash = "sha256:1d2880b792ae8757289136f1db2b7b99100ce959b2aa57fd69dab783d05afac4"},
