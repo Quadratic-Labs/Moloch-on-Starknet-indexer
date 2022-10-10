@@ -13,7 +13,7 @@ services:
       - ./_docker/apibara_mongodb:/data/db
 
   mongo-express:
-    image: mongo-express:0.54.0
+    image: mongo-express:1.0.0-alpha.4
     ports:
       - 8082:8081
     environment:
