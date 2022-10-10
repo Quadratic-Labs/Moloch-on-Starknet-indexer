@@ -43,5 +43,6 @@ services:
 
   devnet:
     image: shardlabs/starknet-devnet:latest
+    command: --seed 5
     ports:
       - 5050:5050
