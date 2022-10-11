@@ -102,7 +102,7 @@ def test_contract_file() -> Path:
     return contract_file
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 async def contract(client: AccountClient, test_contract_file: Path) -> Contract:
     deployment_result = await Contract.deploy(
         client=client,
