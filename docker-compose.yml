@@ -42,7 +42,7 @@ services:
     #   - ./apibara:/usr/etc/apibara
 
   devnet:
-    image: shardlabs/starknet-devnet:latest
+    image: shardlabs/starknet-devnet:0.3.3
     command: --seed 5
     ports:
       - 5050:5050
