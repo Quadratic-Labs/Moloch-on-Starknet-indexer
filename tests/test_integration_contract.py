@@ -1,10 +1,14 @@
 import json
+import pymongo
+from multiprocessing import Process
 from pathlib import Path
 from starknet_py.contract import Contract
 from starknet_py.net.account.account_client import AccountClient
 from starknet_py.utils.data_transformer.data_transformer import CairoSerializer
+from pymongo.database import Database
 
 from .conftest import Account
+from . import config
 
 
 async def test_contract(contract: Contract):
@@ -26,7 +30,7 @@ async def test_invoke(contract: Contract, client: AccountClient, account: Accoun
     assert call_result.res == amount
 
 
-async def test_event(contract: Contract, client: AccountClient, account: Account):
+async def test_event(contract: Contract, client: AccountClient):
     invoke_result = await contract.functions["increase_balance"].invoke(
         10, max_fee=10**16
     )
@@ -65,3 +69,28 @@ async def test_event(contract: Contract, client: AccountClient, account: Account
     expected_event_data = ([0, 10], {"current_balance": [0], "amount": [10]})
 
     assert event_data == expected_event_data
+
+
+async def test_indexer(
+    indexer: Process,
+    contract: Contract,
+    client: AccountClient,
+    mongo_client: pymongo.MongoClient,
+):
+    await test_event(contract=contract, client=client)
+
+    mongo_db = mongo_client[indexer.indexer_id]
+
+    import asyncio
+
+    # Wait for apibara to send the events and for the indexer to handle them
+    # TODO: find a better way to do that ?
+    await asyncio.sleep(5)
+
+    events = list(mongo_db["events"].find())
+    assert len(events) == 1
+
+    event = events[0]
+
+    assert event["name"] == "increase_balance_called"
+    assert int(event["address"].hex(), 16) == contract.address

@@ -1,23 +1,34 @@
 import asyncio
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
+from datetime import datetime
+from multiprocessing import Process
 from pathlib import Path
 
+import pymongo
 import pytest
 import requests
-from python_on_whales import DockerClient, Container
-
-from requests.adapters import HTTPAdapter, Retry
+from apibara import EventFilter
+from python_on_whales import Container
 from starknet_py.contract import Contract
-from starknet_py.net.gateway_client import GatewayClient
-from starkware.starknet.services.api.feeder_gateway.feeder_gateway_client import (
-    FeederGatewayClient,
-)
 from starknet_py.net.account.account_client import AccountClient
-from starknet_py.net.signer.stark_curve_signer import KeyPair
+from starknet_py.net.gateway_client import GatewayClient
 from starknet_py.net.models import StarknetChainId
+from starknet_py.net.signer.stark_curve_signer import KeyPair
 
-STARKNET_NETWORK_URL = "http://localhost:5051"
+from indexer.indexer import run_indexer
+from .utils import (
+    docker,
+    wait_for_apibara,
+    wait_for_devnet,
+    wait_for_docker_services,
+    default_events_handler,
+)
+from . import config
+
+
+def pytest_addoption(parser):
+    parser.addoption("--keep-docker-services", action="store_true", default=False)
 
 
 @dataclass
@@ -28,6 +39,7 @@ class Account:
 
 
 # We have to override the default event_loop to be able to write async fixtures with a session scope
+# TODO: think about using a different event_loop instead of overriding as suggested by the asyncio-pytest docs
 @pytest.fixture(scope="session")
 def event_loop():
     policy = asyncio.get_event_loop_policy()
@@ -37,57 +49,48 @@ def event_loop():
 
 
 @pytest.fixture(scope="session")
-def docker_compose_services(request) -> list[Container]:
-    docker = DockerClient(
-        compose_files=["docker-compose.test.yml"],
-        compose_project_directory=Path(__file__).parent.parent,
-        compose_project_name="indexer-test",
-    )
+async def docker_compose_services(request: pytest.FixtureRequest) -> list[Container]:
     docker.compose.up(detach=True)
+
     # This ensures the docker services are deleted even if the fixture raises an exception
-    request.addfinalizer(docker.compose.down)
+    # Pass --keep-docker-services to the pytest command to prevent taking them down,
+    # which will make integration tests run faster
+    if not request.config.option.keep_docker_services:
+        request.addfinalizer(docker.compose.down)
 
-    containers = docker.compose.ps()
-    not_running_containers = [
-        container for container in containers if not container.state.running
-    ]
-    if not_running_containers:
-        raise RuntimeError("Some containers are not running:", not_running_containers)
+    await wait_for_docker_services()
 
-    # starknet-devnet take some time to be ready
-    # this will make the is_alive request retries after 0.25s, 0.5s, 1s, 2s, 4s, ...
-    retry_strategy = Retry(total=10, backoff_factor=0.25)
-    adapter = HTTPAdapter(max_retries=retry_strategy)
-    session = requests.Session()
-    session.mount(STARKNET_NETWORK_URL, adapter)
+    # Run the wait functions concurrently using asyncio tasks
+    wait_for_devnet_task = asyncio.create_task(wait_for_devnet())
+    wait_for_apibara_task = asyncio.create_task(wait_for_apibara())
 
-    is_alive_response = session.get(os.path.join(STARKNET_NETWORK_URL, "is_alive"))
-    is_alive_response.raise_for_status()
+    await wait_for_devnet_task
+    await wait_for_apibara_task
 
-    return containers
+    return docker.compose.ps()
 
 
 @pytest.fixture(scope="session")
 def account() -> Account:
-    predeployed_accounts = requests.get(
-        os.path.join(STARKNET_NETWORK_URL, "predeployed_accounts")
-    ).json()
-    account = predeployed_accounts[0]
+    url = os.path.join(config.STARKNET_NETWORK_URL, "predeployed_accounts")
+    predeployed_accounts = requests.get(url, timeout=5).json()
+    first_account = predeployed_accounts[0]
 
     return Account(
-        address=int(account["address"], 16),
-        private_key=int(account["private_key"], 16),
-        public_key=int(account["public_key"], 16),
+        address=int(first_account["address"], 16),
+        private_key=int(first_account["private_key"], 16),
+        public_key=int(first_account["public_key"], 16),
     )
 
 
 @pytest.fixture(scope="session")
 def client(docker_compose_services, account) -> AccountClient:
-    client = GatewayClient(STARKNET_NETWORK_URL)
+    client = GatewayClient(config.STARKNET_NETWORK_URL)
 
     return AccountClient(
         address=account.address,
         client=client,
+        # I don't know why we have to pass the chain_id/chain
         chain=StarknetChainId.TESTNET,
         key_pair=KeyPair(account.private_key, account.public_key),
         # Version 0 (default) is deprecated, and raises exception when invoking get_nonce
@@ -110,3 +113,45 @@ async def contract(client: AccountClient, test_contract_file: Path) -> Contract:
     )
     await deployment_result.wait_for_acceptance()
     return deployment_result.deployed_contract
+
+
+@pytest.fixture
+async def indexer(
+    contract: Contract, docker_compose_services, request: pytest.FixtureRequest
+):
+    filters = [
+        EventFilter.from_event_name(
+            name="increase_balance_called",
+            address=contract.address,
+        ),
+    ]
+
+    indexer_id = request.node.name + "_" + datetime.now().strftime("%Y_%m_%d_%H_%I_%M")
+
+    # TODO: is it safe to run the indexer like so ?
+    indexer_process = Process(
+        target=lambda: asyncio.run(
+            run_indexer(
+                server_url=config.APIBARA_URL,
+                mongo_url=config.MONGO_URL,
+                indexer_id=indexer_id,
+                new_events_handler=default_events_handler,
+                filters=filters,
+                restart=True,
+            ),
+        )
+    )
+
+    # To be accessed by the tests if needed, ex: to infer the mongodb database name
+    indexer_process.indexer_id = indexer_id
+
+    indexer_process.start()
+
+    yield indexer_process
+
+    indexer_process.terminate()
+
+
+@pytest.fixture(scope="session")
+def mongo_client(docker_compose_services) -> pymongo.MongoClient:
+    return pymongo.MongoClient(config.MONGO_URL)
