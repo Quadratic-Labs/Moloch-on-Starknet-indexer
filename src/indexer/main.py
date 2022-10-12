@@ -4,11 +4,12 @@ import asyncio
 from functools import wraps
 
 import click
+from starknet_py.net.client import Client
 
 from indexer.graphql import run_graphql_api
 from indexer.indexer import run_indexer
 
-DEFAULT_MONGO_URL = "mongodb://apibara:apibara@localhost:27018"
+DEFAULT_MONGO_URL = "mongodb://apibara:apibara@localhost:27017"
 DEFAULT_APIBARA_SERVER_URL = "goerli.starknet.stream.apibara.com"
 DEFAULT_APIBARA_SERVER_URL = "localhost:7171"
 
@@ -40,6 +41,9 @@ def cli():
 @async_command
 async def start(server_url, mongo_url, restart):
     """Start the Apibara indexer."""
+    print(
+        f"Running the indexer with server_url={server_url}, mongo_url={mongo_url}, restart={restart}"
+    )
     await run_indexer(
         restart=restart,
         server_url=server_url,

@@ -8,19 +8,16 @@ services:
       MONGO_INITDB_ROOT_USERNAME: apibara
       MONGO_INITDB_ROOT_PASSWORD: apibara
     ports:
-      - 27018:27017
+      - 27017:27017
     volumes:
       - ./_docker/apibara_mongodb:/data/db
 
   mongo-express:
     image: mongo-express:1.0.0-alpha.4
     ports:
-      - 8082:8081
+      - 8081:8081
     environment:
-      ME_CONFIG_OPTIONS_EDITORTHEME: "ambiance"
       ME_CONFIG_MONGODB_SERVER: "mongo"
-      ME_CONFIG_BASICAUTH_USERNAME: "user"
-      ME_CONFIG_BASICAUTH_PASSWORD: "fairly long password"
       ME_CONFIG_MONGODB_ADMINUSERNAME: apibara
       ME_CONFIG_MONGODB_ADMINPASSWORD: apibara
     depends_on:
