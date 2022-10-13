@@ -1,0 +1,4 @@
+[submodule "cairo-contracts"]
+	path = cairo-contracts
+	url = git@bitbucket.org:zamoj/cairo-contracts.git
+	branch = develop
