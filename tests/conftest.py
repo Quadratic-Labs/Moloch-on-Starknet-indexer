@@ -153,6 +153,17 @@ async def contract(client: AccountClient, compiled_contract: str) -> Contract:
 
 
 @pytest.fixture
+async def contract_events(contract: Contract) -> dict:
+    events = {}
+
+    for element in contract.data.abi:
+        if element["type"] == "event":
+            events[element["name"]] = element
+
+    return events
+
+
+@pytest.fixture
 def run_indexer_process(
     docker_compose_services, request: pytest.FixtureRequest
 ) -> IndexerProcessRunner:

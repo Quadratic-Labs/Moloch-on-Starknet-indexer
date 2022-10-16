@@ -8,7 +8,9 @@ from ..conftest import Account, IndexerProcessRunner
 from .utils import felt_to_str, str_to_felt
 
 
-async def test_submit_signaling_event(contract: Contract, client: AccountClient):
+async def test_submit_signaling_event(
+    contract: Contract, contract_events: dict, client: AccountClient
+):
     title = "Test signaling event"
     # TODO: test description with more than 31 chars
     description = "Test signaling event"
@@ -26,20 +28,7 @@ async def test_submit_signaling_event(contract: Contract, client: AccountClient)
 
     # Takes an abi of the event which data we want to serialize
     # We can get it from the contract abi
-    # TODO Use compiled_contract fixture or contract.data.abi
-    emitted_event_abi = {
-        "data": [
-            {"name": "id", "type": "felt"},
-            {"name": "title", "type": "felt"},
-            {"name": "description", "type": "felt"},
-            {"name": "type", "type": "felt"},
-            {"name": "submittedBy", "type": "felt"},
-            {"name": "submittedAt", "type": "felt"},
-        ],
-        "keys": [],
-        "name": "ProposalAdded",
-        "type": "event",
-    }
+    emitted_event_abi = contract_events["ProposalAdded"]
 
     # ProposalAdded.emit(id=info.id, title=info.title, description=info.description, type=info.type, submittedBy=info.submittedBy, submittedAt=info.submittedAt);
 
