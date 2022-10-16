@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from multiprocessing import Process
 from pathlib import Path
+from typing import Callable, Optional
 
 import pymongo
 import pytest
@@ -15,9 +16,10 @@ from starknet_py.net.account.account_client import AccountClient
 from starknet_py.net.gateway_client import GatewayClient
 from starknet_py.net.models import StarknetChainId
 from starknet_py.net.signer.stark_curve_signer import KeyPair
+from starknet_py.compile.compiler import Compiler
 
 from indexer.indexer import run_indexer
-from .utils import (
+from .integration.utils import (
     docker,
     wait_for_apibara,
     wait_for_devnet,
@@ -25,6 +27,8 @@ from .utils import (
     default_events_handler,
 )
 from . import config
+
+IndexerProcessRunner = Callable[[list[EventFilter]], Process]
 
 
 def pytest_addoption(parser):
@@ -99,57 +103,84 @@ def client(docker_compose_services, account) -> AccountClient:
 
 
 @pytest.fixture(scope="session")
-def test_contract_file() -> Path:
+def sample_contract_file() -> Path:
     tests_dir = Path(__file__).parent
-    contract_file = tests_dir / "assets/test_contract.cairo"
+    contract_file = tests_dir / "assets/sample_contract.cairo"
+    return contract_file
+
+
+@pytest.fixture(scope="session")
+def contract_file() -> Path:
+    root_dir = Path(__file__).parent.parent
+    contract_file = root_dir / "cairo-contracts/contracts/main.cairo"
     return contract_file
 
 
 @pytest.fixture
-async def contract(client: AccountClient, test_contract_file: Path) -> Contract:
+async def sample_contract(
+    client: AccountClient, sample_contract_file: Path
+) -> Contract:
     deployment_result = await Contract.deploy(
         client=client,
-        compilation_source=[str(test_contract_file)],
+        compilation_source=[str(sample_contract_file)],
+    )
+    await deployment_result.wait_for_acceptance()
+    return deployment_result.deployed_contract
+
+
+@pytest.fixture(scope="session")
+async def compiled_contract(contract_file: Path) -> str:
+    return Compiler(
+        contract_source=[str(contract_file)],
+        cairo_path=[str(contract_file.parent)],
+    ).compile_contract()
+
+
+@pytest.fixture
+async def contract(client: AccountClient, compiled_contract: str) -> Contract:
+    majority = 50
+    quorum = 60
+    grace_duration = 10
+    voting_duration = 10
+
+    deployment_result = await Contract.deploy(
+        client=client,
+        compiled_contract=compiled_contract,
+        constructor_args=[majority, quorum, grace_duration, voting_duration],
     )
     await deployment_result.wait_for_acceptance()
     return deployment_result.deployed_contract
 
 
 @pytest.fixture
-async def indexer(
-    contract: Contract, docker_compose_services, request: pytest.FixtureRequest
-):
-    filters = [
-        EventFilter.from_event_name(
-            name="increase_balance_called",
-            address=contract.address,
-        ),
-    ]
-
-    indexer_id = request.node.name + "_" + datetime.now().strftime("%Y_%m_%d_%H_%I_%M")
-
-    # TODO: is it safe to run the indexer like so ?
-    indexer_process = Process(
-        target=lambda: asyncio.run(
-            run_indexer(
-                server_url=config.APIBARA_URL,
-                mongo_url=config.MONGO_URL,
-                indexer_id=indexer_id,
-                new_events_handler=default_events_handler,
-                filters=filters,
-                restart=True,
-            ),
+def run_indexer_process(
+    docker_compose_services, request: pytest.FixtureRequest
+) -> IndexerProcessRunner:
+    def _create_indexer(filters: list[EventFilter]) -> Process:
+        indexer_id = (
+            request.node.name + "_" + datetime.now().strftime("%Y_%m_%d_%H_%I_%M")
         )
-    )
+        indexer_process = Process(
+            target=lambda: asyncio.run(
+                run_indexer(
+                    server_url=config.APIBARA_URL,
+                    mongo_url=config.MONGO_URL,
+                    indexer_id=indexer_id,
+                    new_events_handler=default_events_handler,
+                    filters=filters,
+                    restart=True,
+                ),
+            )
+        )
+        # To be accessed by the tests if needed, ex: to infer the mongodb database name
+        indexer_process.indexer_id = indexer_id
 
-    # To be accessed by the tests if needed, ex: to infer the mongodb database name
-    indexer_process.indexer_id = indexer_id
+        indexer_process.start()
+        request.addfinalizer(indexer_process.terminate)
 
-    indexer_process.start()
+        return indexer_process
 
-    yield indexer_process
-
-    indexer_process.terminate()
+    return _create_indexer
 
 
 @pytest.fixture(scope="session")

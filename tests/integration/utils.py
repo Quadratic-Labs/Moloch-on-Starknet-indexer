@@ -1,15 +1,20 @@
+import asyncio
 import logging
+from multiprocessing import Process
+from multiprocessing.sharedctypes import Value
 import os
 from pathlib import Path
+from typing import Union
 
 import backoff
 import requests
 from grpc.aio import AioRpcError
 from grpc_requests.aio import AsyncClient
 from python_on_whales import Container, DockerClient
-from apibara import Info, NewEvents
+from apibara import Info, NewEvents, EventFilter
 
-from . import config
+from .. import config
+from indexer.indexer import run_indexer
 
 logger = logging.getLogger("tests")
 
@@ -94,3 +99,21 @@ async def default_events_handler(info: Info, block_events: NewEvents):
 
     # Insert multiple documents in one call.
     await info.storage.insert_many("events", events)
+
+
+def str_to_felt(text):
+    b_text = bytes(text, "ascii")
+    return int.from_bytes(b_text, "big")
+
+
+def felt_to_str(felt: Union[int, list[int]]) -> str:
+    if isinstance(felt, list):
+        if len(felt) == 1:
+            felt = felt[0]
+        else:
+            raise ValueError(
+                f"felt should be either an int or a list with a single int element, got: {felt}"
+            )
+
+    length = (felt.bit_length() + 7) // 8
+    return felt.to_bytes(length, byteorder="big").decode("utf-8")
