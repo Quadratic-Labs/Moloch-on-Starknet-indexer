@@ -1,0 +1,15 @@
+{
+    "python.testing.pytestArgs": [
+        "tests",
+        "--keep-docker-services"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "cSpell.words": [
+        "apibara",
+        "backoff",
+        "devnet",
+        "predeployed",
+        "STARKNET"
+    ]
+}
