@@ -6,7 +6,7 @@ import strawberry
 from aiohttp import web
 from pymongo import MongoClient
 from strawberry.aiohttp.views import GraphQLView
-from indexer.indexer import indexer_id
+from indexer.indexer import INDEXER_ID
 
 
 def parse_hex(value):
@@ -107,7 +107,7 @@ class IndexerGraphQLView(GraphQLView):
 
 async def run_graphql_api(mongo_url):
     mongo = MongoClient(mongo_url)
-    db_name = indexer_id.replace("-", "_")
+    db_name = INDEXER_ID.replace("-", "_")
     db = mongo[db_name]
 
     schema = strawberry.Schema(query=Query)

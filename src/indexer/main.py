@@ -8,16 +8,13 @@ from starknet_py.net.client import Client
 
 from indexer.graphql import run_graphql_api
 from indexer.indexer import run_indexer
-
-DEFAULT_MONGO_URL = "mongodb://apibara:apibara@localhost:27017"
-DEFAULT_APIBARA_SERVER_URL = "goerli.starknet.stream.apibara.com"
-DEFAULT_APIBARA_SERVER_URL = "localhost:7171"
+from indexer import config
 
 
-def async_command(f):
-    @wraps(f)
+def async_command(coro):
+    @wraps(coro)
     def wrapper(*args, **kwargs):
-        return asyncio.run(f(*args, **kwargs))
+        return asyncio.run(coro(*args, **kwargs))
 
     return wrapper
 
@@ -30,30 +27,46 @@ def cli():
 @cli.command()
 @click.option(
     "--server-url",
-    default=DEFAULT_APIBARA_SERVER_URL,
+    default=config.APIBARA_SERVER_URL,
     show_default=True,
     help="Apibara stream url.",
 )
 @click.option(
-    "--mongo-url", default=DEFAULT_MONGO_URL, show_default=True, help="MongoDB url."
+    "--mongo-url", default=config.MONGO_URL, show_default=True, help="MongoDB url."
 )
-@click.option("--restart", is_flag=True, help="Restart indexing from the beginning.")
+@click.option(
+    "--starknet-network-url",
+    default=config.STARKNET_NETWORK_URL,
+    show_default=True,
+    help="Starknet Network url.",
+)
+@click.option(
+    "--restart",
+    is_flag=True,
+    show_default=True,
+    help="Restart indexing from the beginning.",
+)
+@click.option(
+    "--ssl",
+    is_flag=True,
+    show_default=True,
+    help="Wether to use ssl when interacting with Apibara.",
+)
 @async_command
-async def start(server_url, mongo_url, restart):
+async def start(server_url, mongo_url, starknet_network_url, restart, ssl):
     """Start the Apibara indexer."""
-    print(
-        f"Running the indexer with server_url={server_url}, mongo_url={mongo_url}, restart={restart}"
-    )
     await run_indexer(
-        restart=restart,
         server_url=server_url,
         mongo_url=mongo_url,
+        starknet_network_url=starknet_network_url,
+        restart=restart,
+        ssl=ssl,
     )
 
 
 @cli.command()
 @click.option(
-    "--mongo-url", default=DEFAULT_MONGO_URL, show_default=True, help="MongoDB url."
+    "--mongo-url", default=config.MONGO_URL, show_default=True, help="MongoDB url."
 )
 @async_command
 async def graphql(mongo_url):

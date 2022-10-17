@@ -1,87 +1,59 @@
+from dataclasses import asdict
 from datetime import datetime
-from apibara import EventFilter, IndexerRunner, Info, NewEvents
+import logging
+from typing import Any, Callable, Coroutine
+from apibara.model import EventFilter, NewEvents, Event, BlockHeader, StarkNetEvent
+from apibara.indexer.runner import IndexerRunner, Info
 from apibara.indexer import IndexerRunnerConfiguration
 from starknet_py.contract import identifier_manager_from_abi
 from starknet_py.utils.data_transformer.data_transformer import DataTransformer
+from starknet_py.net.gateway_client import GatewayClient
 
-indexer_id = "nft-indexer"
 
-uint256_abi = {
-    "name": "Uint256",
-    "type": "struct",
-    "size": 2,
-    "members": [
-        {"name": "low", "offset": 0, "type": "felt"},
-        {"name": "high", "offset": 1, "type": "felt"},
-    ],
+from .deserializer import ProposalAdded
+from . import config
+
+
+async def handle_proposal_added_event(
+    info: Info, block: BlockHeader, event: StarkNetEvent
+):
+    proposal_added = await ProposalAdded.from_event(info=info, block=block, event=event)
+
+    logger.debug("Inserting %s", proposal_added)
+    await info.storage.insert_one("proposals", asdict(proposal_added))
+
+
+async def handle_xxxx_event(info: Info, block: BlockHeader, event: StarkNetEvent):
+    pass
+
+
+EventHandler = Callable[[Info, BlockHeader, StarkNetEvent], Coroutine[Any, Any, None]]
+
+DEFAULT_EVENT_HANDLERS: dict[str, EventHandler] = {
+    "ProposalAdded": handle_proposal_added_event,
+    "xxxx": handle_xxxx_event,
 }
 
-transfer_abi = {
-    "name": "Transfer",
-    "type": "event",
-    "keys": [],
-    "outputs": [
-        {"name": "from_address", "type": "felt"},
-        {"name": "to_address", "type": "felt"},
-        {"name": "token_id", "type": "Uint256"},
-    ],
-}
-
-# TODO: data_transformer.py:498: UserWarning: DataTransformer is deprecated. Use FunctionCallSerializer instead
-#  warnings.warn("DataTransformer is deprecated. Use FunctionCallSerializer instead")
-# Also, check nftmeow-backend, they don't use it
-transfer_decoder = DataTransformer(
-    abi=transfer_abi,
-    identifier_manager=identifier_manager_from_abi([transfer_abi, uint256_abi]),
-)
+logger = logging.getLogger(__name__)
 
 
-def decode_transfer_event(data):
-    data = [int.from_bytes(b, "big") for b in data]
-    return transfer_decoder.to_python(data)
+async def default_new_events_handler(
+    info: Info,
+    block_events: NewEvents,
+    event_handlers: dict[str, EventHandler] = None,
+):
+    if event_handlers is None:
+        event_handlers = DEFAULT_EVENT_HANDLERS
+
+    for event in block_events.events:
+        if event_handler := event_handlers.get(event.name):
+            logger.debug("Handling block=%s, event=%s", block_events.block, event)
+            await event_handler(info, block_events.block, event)
+        else:
+            logger.error("Cannot find event_handler for %s", event)
 
 
-def encode_int_as_bytes(n):
-    return n.to_bytes(32, "big")
-
-
-async def handle_events(info: Info, block_events: NewEvents):
-    # (Get Block Section)
-    block_time = block_events.block.timestamp
-
-    # (Store Transfers Section)
-    transfers = [decode_transfer_event(event.data) for event in block_events.events]
-    transfers_docs = [
-        {
-            "from_address": encode_int_as_bytes(tr.from_address),
-            "to_address": encode_int_as_bytes(tr.to_address),
-            "token_id": encode_int_as_bytes(tr.token_id),
-            "timestamp": block_time,
-        }
-        for tr in transfers
-    ]
-    await info.storage.insert_many("transfers", transfers_docs)
-
-    # (Update Tokens Section)
-    new_token_owner = dict()
-    for transfer in transfers:
-        new_token_owner[transfer.token_id] = transfer.to_address
-
-    for token_id, new_owner in new_token_owner.items():
-        token_id = encode_int_as_bytes(token_id)
-        await info.storage.find_one_and_replace(
-            "tokens",
-            {"token_id": token_id},
-            {
-                "token_id": token_id,
-                "owner": encode_int_as_bytes(new_owner),
-                "updated_at": block_time,
-            },
-            upsert=True,
-        )
-
-
-filters = [
+DEFAULT_FILTERS = [
     EventFilter.from_event_name(
         name="Transfer",
         address="0x0266b1276d23ffb53d99da3f01be7e29fa024dd33cd7f7b1eb7a46c67891c9d0",
@@ -90,24 +62,42 @@ filters = [
 
 
 async def run_indexer(
-    server_url=None,
-    mongo_url=None,
+    server_url,
+    mongo_url,
+    starknet_network_url,
+    ssl=True,
     restart: bool = False,
-    indexer_id: str = indexer_id,
-    new_events_handler=handle_events,
-    filters: list[EventFilter] = filters,
+    indexer_id: str = config.INDEXER_ID,
+    new_events_handler=default_new_events_handler,
+    filters: list[EventFilter] = None,
 ):
-    print("Starting Apibara indexer")
+    if filters is None:
+        filters = DEFAULT_FILTERS
+
+    logger.info(
+        "Starting the indexer with server_url=%s, mongo_url=%s, indexer_id=%s restart=%s",
+        server_url,
+        mongo_url,
+        indexer_id,
+        restart,
+    )
 
     runner = IndexerRunner(
         config=IndexerRunnerConfiguration(
             apibara_url=server_url,
-            apibara_ssl=False,
+            apibara_ssl=ssl,
             storage_url=mongo_url,
         ),
         reset_state=restart,
         indexer_id=indexer_id,
         new_events_handler=new_events_handler,
+    )
+
+    runner.set_context(
+        {
+            "starknet_network_url": starknet_network_url,
+            "starknet_client": GatewayClient(starknet_network_url),
+        }
     )
 
     # Create the indexer if it doesn't exist on the server,
@@ -117,6 +107,6 @@ async def run_indexer(
     # event names and StarkNet events.
     runner.create_if_not_exists(filters=filters)
 
-    print("Initialization completed. Entering main loop.")
+    logger.info("Initialization completed. Entering main loop.")
 
     await runner.run()
