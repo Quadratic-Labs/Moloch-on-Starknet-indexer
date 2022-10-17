@@ -42,17 +42,14 @@ async def test_submit_signaling_event(
         value_types=emitted_event_abi["data"], values=events[0].data
     )
 
-    # Transforms python data to cairo (needs types of the values and python data)
-    _, event_data = cairo_serializer.from_python(
-        emitted_event_abi["data"], *python_data
-    )
-    assert felt_to_str(event_data["title"]) == title
-    assert felt_to_str(event_data["description"]) == description
+    assert felt_to_str(python_data.title) == title
+    assert felt_to_str(python_data.description) == description
 
 
 async def test_indexer(
     run_indexer_process: IndexerProcessRunner,
     contract: Contract,
+    contract_events: dict,
     client: AccountClient,
     mongo_client: pymongo.MongoClient,
 ):
@@ -65,7 +62,9 @@ async def test_indexer(
 
     indexer = run_indexer_process(filters)
 
-    await test_submit_signaling_event(contract=contract, client=client)
+    await test_submit_signaling_event(
+        contract=contract, contract_events=contract_events, client=client
+    )
 
     mongo_db = mongo_client[indexer.indexer_id]
 
