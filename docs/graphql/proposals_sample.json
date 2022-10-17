@@ -1,0 +1,46 @@
+{
+    "data": [
+        {
+            "id": 0,
+            "type": "Singlaling",
+            "title": "Test",
+            "description": "Test",
+            "link": "https://",
+            "submitted_at": "2022-10-15T15:30",
+            "submitted_by": "0x01234223",
+            "accepted_at": "2022-10-17T15:30",
+            "processed_at": "2022-10-19T15:30",
+            "majority": 10,
+            "quorum": 10,
+            "yes_votes": 4,
+            "no_votes": 4,
+            "current_majority": 2,
+            "current_quorum": 2,
+            "time_remaining": "2 days",
+            "voting_period_ending_at": "2022-10-19T15:30",
+            "grace_period_ending_at": "2022-10-20T15:30"
+            // ... on GuildKick {
+            // member_address
+            // }
+            // ... on OnBoard {
+            // address
+            // shares
+            // loot
+            // }
+            // ... on WhiteList {
+            // token_address
+            // token_name
+            // }
+            // ... on UnWhiteList {
+            // token_address
+            // token_name
+            // }
+            // ... on Swap {
+            // tribute_address
+            // tribute_offered
+            // payment_requested
+            // payment_requested
+            // }
+        }
+    ]
+}
