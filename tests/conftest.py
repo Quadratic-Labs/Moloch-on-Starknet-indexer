@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from multiprocessing import Process
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable, Optional, Any
 
 import pymongo
 import pytest
@@ -24,11 +24,18 @@ from .integration.utils import (
     wait_for_apibara,
     wait_for_devnet,
     wait_for_docker_services,
-    default_events_handler,
+    default_new_events_handler_test,
 )
 from . import config
 
-IndexerProcessRunner = Callable[[list[EventFilter]], Process]
+
+@dataclass
+class Indexer:
+    process: Process
+    id: str
+
+
+IndexerProcessRunner = Callable[[list[EventFilter], Any], Indexer]
 
 
 def pytest_addoption(parser):
@@ -167,29 +174,30 @@ async def contract_events(contract: Contract) -> dict:
 def run_indexer_process(
     docker_compose_services, request: pytest.FixtureRequest
 ) -> IndexerProcessRunner:
-    def _create_indexer(filters: list[EventFilter]) -> Process:
+    def _create_indexer(
+        filters: list[EventFilter], new_events_handler=default_new_events_handler_test
+    ) -> Indexer:
         indexer_id = (
             request.node.name + "_" + datetime.now().strftime("%Y_%m_%d_%H_%I_%M")
         )
-        indexer_process = Process(
+        process = Process(
             target=lambda: asyncio.run(
                 run_indexer(
                     server_url=config.APIBARA_URL,
                     mongo_url=config.MONGO_URL,
+                    starknet_network_url=config.STARKNET_NETWORK_URL,
+                    ssl=False,
                     indexer_id=indexer_id,
-                    new_events_handler=default_events_handler,
+                    new_events_handler=new_events_handler,
                     filters=filters,
                     restart=True,
                 ),
             )
         )
-        # To be accessed by the tests if needed, ex: to infer the mongodb database name
-        indexer_process.indexer_id = indexer_id
+        process.start()
+        request.addfinalizer(process.terminate)
 
-        indexer_process.start()
-        request.addfinalizer(indexer_process.terminate)
-
-        return indexer_process
+        return Indexer(process, indexer_id)
 
     return _create_indexer
 

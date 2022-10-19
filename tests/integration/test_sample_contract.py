@@ -9,7 +9,7 @@ from pymongo.database import Database
 from apibara import EventFilter
 
 from ..conftest import Account, IndexerProcessRunner
-from .. import config
+from .utils import default_new_events_handler_test, wait_for_indexer
 
 
 async def test_contract_abi(sample_contract: Contract, sample_contract_file: Path):
@@ -73,6 +73,8 @@ async def test_event(sample_contract: Contract, client: AccountClient):
 
     assert event_data == expected_event_data
 
+    return transaction_receipt
+
 
 async def test_indexer(
     run_indexer_process: IndexerProcessRunner,
@@ -87,17 +89,15 @@ async def test_indexer(
         ),
     ]
 
-    indexer = run_indexer_process(filters)
+    indexer = run_indexer_process(filters, default_new_events_handler_test)
 
-    await test_event(sample_contract=sample_contract, client=client)
+    transaction_receipt = await test_event(
+        sample_contract=sample_contract, client=client
+    )
 
-    mongo_db = mongo_client[indexer.indexer_id]
+    mongo_db = mongo_client[indexer.id]
 
-    import asyncio
-
-    # Wait for apibara to send the events and for the indexer to handle them
-    # TODO: find a better way to do that ?
-    await asyncio.sleep(5)
+    wait_for_indexer(mongo_db, transaction_receipt.block_number)
 
     events = list(mongo_db["events"].find())
     assert len(events) == 1

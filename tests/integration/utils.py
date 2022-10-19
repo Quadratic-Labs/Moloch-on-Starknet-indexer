@@ -80,7 +80,19 @@ async def wait_for_apibara():
     return await node_service.Status()
 
 
-async def default_events_handler(info: Info, block_events: NewEvents):
+@backoff.on_predicate(backoff.constant, max_time=config.DEFAULT_MAX_BACKOFF_TIME)
+def wait_for_indexer(mongo_db: Database, block_number: int):
+    """Wait for the indexer until it reaches a given block_number
+
+    It could be used during tests to ensure some events were processed before
+    reading the mongo db
+    """
+    return mongo_db["_apibara"].find_one(
+        {"indexer_id": mongo_db.name, "indexed_to": block_number}
+    )
+
+
+async def default_new_events_handler_test(info: Info, block_events: NewEvents):
     """Handle a group of events grouped by block."""
     logger.debug("Received events for block %s", block_events.block.number)
     for event in block_events.events:

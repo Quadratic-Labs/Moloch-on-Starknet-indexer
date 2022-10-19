@@ -60,19 +60,15 @@ async def test_indexer(
         ),
     ]
 
-    indexer = run_indexer_process(filters)
+    indexer = run_indexer_process(filters, default_new_events_handler_test)
 
-    await test_submit_signaling_event(
+    transaction_receipt = await test_submit_signaling_event(
         contract=contract, contract_events=contract_events, client=client
     )
 
-    mongo_db = mongo_client[indexer.indexer_id]
+    mongo_db = mongo_client[indexer.id]
 
-    import asyncio
-
-    # Wait for apibara to send the events and for the indexer to handle them
-    # TODO: find a better way to do that ?
-    await asyncio.sleep(5)
+    wait_for_indexer(mongo_db, transaction_receipt.block_number)
 
     events = list(mongo_db["events"].find())
     assert len(events) == 1
