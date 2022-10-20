@@ -130,6 +130,13 @@ enum OrderDirection {
   DESC
 }
 
+
+type VotingStatus {
+  proposal: id
+  member: Address
+  vote: Boolean
+}
+
 type Query {
   # default value is null by default ?
   proposals(
@@ -141,4 +148,5 @@ type Query {
   members: [Member]
   member(address: Address): Member
   bank: Bank
+  voting_history(address: Address = None, member = Address = None): [VotingStatus]
 }

@@ -1,11 +1,12 @@
+"""This module uses the sample contract tests/assets/sample_contract.cairo to make
+sure the integration tests environment is working as expected
+"""
 import json
 import pymongo
-from multiprocessing import Process
 from pathlib import Path
 from starknet_py.contract import Contract
 from starknet_py.net.account.account_client import AccountClient
 from starknet_py.utils.data_transformer.data_transformer import CairoSerializer
-from pymongo.database import Database
 from apibara import EventFilter
 
 from ..conftest import Account, IndexerProcessRunner

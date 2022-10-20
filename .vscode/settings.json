@@ -12,6 +12,10 @@
         "deserializers",
         "devnet",
         "predeployed",
+        "pymongo",
         "STARKNET"
+    ],
+    "python.linting.pylintArgs": [
+        "--disable=invalid-name"
     ]
 }

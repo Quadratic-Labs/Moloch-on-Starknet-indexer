@@ -1,8 +1,8 @@
 from dataclasses import asdict
 from datetime import datetime
 import logging
-from typing import Any, Callable, Coroutine
-from apibara.model import EventFilter, NewEvents, Event, BlockHeader, StarkNetEvent
+from typing import Any, Callable, Coroutine, Type
+from apibara.model import EventFilter, NewEvents, BlockHeader, StarkNetEvent
 from apibara.indexer.runner import IndexerRunner, Info
 from apibara.indexer import IndexerRunnerConfiguration
 from starknet_py.contract import identifier_manager_from_abi
@@ -10,41 +10,11 @@ from starknet_py.utils.data_transformer.data_transformer import DataTransformer
 from starknet_py.net.gateway_client import GatewayClient
 
 
-from .events import ProposalAdded, OnboardProposalAdded
-from . import config
-
-
-async def handle_proposal_added_event(
-    info: Info, block: BlockHeader, event: StarkNetEvent
-):
-    proposal_added = await ProposalAdded.from_event(info=info, block=block, event=event)
-
-    logger.debug("Inserting %s", proposal_added)
-    await info.storage.insert_one("proposals", asdict(proposal_added))
-
-
-async def handle_onboard_proposal_added_event(
-    info: Info, block: BlockHeader, event: StarkNetEvent
-):
-    onboard_proposal_added = await OnboardProposalAdded.from_event(
-        info=info, block=block, event=event
-    )
-
-    logger.debug("Updating onboard proposal %s", onboard_proposal_added)
-    existing = await info.storage.find_one_and_update(
-        "proposals",
-        {"id": onboard_proposal_added.id},
-        {"$set": asdict(onboard_proposal_added)},
-    )
-    logger.debug("Existing proposal %s", existing)
+from . import config, events
+from .deserializer import deserialize_starknet_event
 
 
 EventHandler = Callable[[Info, BlockHeader, StarkNetEvent], Coroutine[Any, Any, None]]
-
-DEFAULT_EVENT_HANDLERS: dict[str, EventHandler] = {
-    "ProposalAdded": handle_proposal_added_event,
-    "OnboardProposalAdded": handle_onboard_proposal_added_event,
-}
 
 logger = logging.getLogger(__name__)
 
@@ -52,17 +22,29 @@ logger = logging.getLogger(__name__)
 async def default_new_events_handler(
     info: Info,
     block_events: NewEvents,
-    event_handlers: dict[str, EventHandler] = None,
+    event_classes: dict[str, Type[events.Event]] = None,
 ):
-    if event_handlers is None:
-        event_handlers = DEFAULT_EVENT_HANDLERS
+    if event_classes is None:
+        event_classes = events.ALL_EVENTS
 
-    for event in block_events.events:
-        if event_handler := event_handlers.get(event.name):
-            logger.debug("Handling block=%s, event=%s", block_events.block, event)
-            await event_handler(info, block_events.block, event)
+    for starknet_event in block_events.events:
+        if event_class := event_classes.get(starknet_event.name):
+            logger.debug(
+                "Handling block=%s, event=%s", block_events.block, starknet_event.name
+            )
+            kwargs = await deserialize_starknet_event(
+                fields=event_class.__annotations__,
+                info=info,
+                block=block_events.block,
+                starknet_event=starknet_event,
+            )
+            event = event_class(**kwargs)
+
+            await event.handle(
+                info=info, block=block_events.block, starknet_event=starknet_event
+            )
         else:
-            logger.error("Cannot find event_handler for %s", event)
+            logger.error("Cannot find event_handler for %s", starknet_event)
 
 
 async def run_indexer(
@@ -75,6 +57,7 @@ async def run_indexer(
     indexer_id: str = config.INDEXER_ID,
     new_events_handler=default_new_events_handler,
 ):
+
     logger.info(
         "Starting the indexer with server_url=%s, mongo_url=%s, starknet_network_url=%s, indexer_id=%s, restart=%s, ssl=%s, filters=%s",
         server_url,

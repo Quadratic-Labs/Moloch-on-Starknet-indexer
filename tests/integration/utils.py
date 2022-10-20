@@ -26,9 +26,18 @@ docker = DockerClient(
 )
 
 
+def raise_timeout_error(details: dict):
+    # TODO: better error message
+    raise TimeoutError(details["target"].__name__)
+
+
 # backoff will run the function until no container is restarting
 # if a container is not running (exited, paused, stopped) a RuntimeError will be raised
-@backoff.on_predicate(backoff.constant, max_time=config.DEFAULT_MAX_BACKOFF_TIME)
+@backoff.on_predicate(
+    backoff.constant,
+    max_time=config.DEFAULT_MAX_BACKOFF_TIME,
+    on_giveup=raise_timeout_error,
+)
 async def wait_for_docker_services():
     containers = docker.compose.ps()
 
@@ -81,24 +90,32 @@ async def wait_for_apibara():
     return await node_service.Status()
 
 
-@backoff.on_predicate(backoff.constant, max_time=config.DEFAULT_MAX_BACKOFF_TIME)
+@backoff.on_predicate(
+    backoff.constant,
+    max_time=config.WAIT_FOR_INDEXER_BACKOFF_TIME,
+    on_giveup=raise_timeout_error,
+)
 def wait_for_indexer(mongo_db: Database, block_number: int):
     """Wait for the indexer until it reaches a given block_number
 
     It could be used during tests to ensure some events were processed before
     reading the mongo db
     """
-    return mongo_db["_apibara"].find_one(
-        {"indexer_id": mongo_db.name, "indexed_to": block_number}
+    document = mongo_db["_apibara"].find_one({"indexer_id": mongo_db.name})
+    indexed_to = document["indexed_to"]
+
+    logger.debug(
+        "Waiting for indexer to reach block_number=%s, it's now at block_number=%s",
+        block_number,
+        indexed_to,
     )
+
+    return indexed_to >= block_number
 
 
 async def default_new_events_handler_test(info: Info, block_events: NewEvents):
     """Handle a group of events grouped by block."""
     logger.debug("Received events for block %s", block_events.block.number)
-    for event in block_events.events:
-        logger.debug(event)
-
     events = [
         {
             "timestamp": block_events.block.timestamp,
@@ -109,6 +126,8 @@ async def default_new_events_handler_test(info: Info, block_events: NewEvents):
         }
         for event in block_events.events
     ]
+
+    logger.debug("Writing to 'events' collection: %s", events)
 
     # Insert multiple documents in one call.
     await info.storage.insert_many("events", events)
