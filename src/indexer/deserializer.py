@@ -1,41 +1,20 @@
+import asyncio
 from dataclasses import dataclass
 from datetime import datetime
-from functools import lru_cache
-from typing import NamedTuple
+from typing import Any, Callable, NamedTuple, Type, Union
 
 from apibara import Info
 from apibara.model import BlockHeader, StarkNetEvent
-from starknet_py.contract import Contract
 from starknet_py.utils.data_transformer.data_transformer import CairoSerializer
 
-
-# TODO: check https://docs.openzeppelin.com/contracts-cairo/0.3.1/utilities
-def int_to_bytes(n: int) -> bytes:
-    return n.to_bytes(32, "big")
-
-
-def str_to_felt(text):
-    b_text = bytes(text, "ascii")
-    return int.from_bytes(b_text, "big")
-
-
-def felt_to_str(felt: int) -> str:
-    length = (felt.bit_length() + 7) // 8
-    return felt.to_bytes(length, byteorder="big").decode("utf-8")
-
-
-@lru_cache(maxsize=100)
-async def get_contract(address, client) -> Contract:
-    return await Contract.from_address(address, client=client)
-
-
-@lru_cache(maxsize=100)
-def get_contract_events(contract: Contract) -> dict:
-    return {
-        element["name"]: element
-        for element in contract.data.abi
-        if element["type"] == "event"
-    }
+from .utils import (
+    function_accepts,
+    int_to_bytes,
+    felt_to_str,
+    get_contract,
+    get_contract_events,
+    get_block,
+)
 
 
 async def deserialize_event(
@@ -61,24 +40,83 @@ async def deserialize_event(
     return python_data
 
 
-@dataclass
-class ProposalAdded:
-    id: int
-    title: str
-    type: str
-    description: str
-    submitted_at: datetime
-    submitted_by: bytes
+class BlockNumber(int):
+    pass
+
+
+async def deserialize_block_number(
+    block_number: BlockNumber, info: Info, block: BlockHeader, event: StarkNetEvent
+) -> datetime:
+    if block.number == block_number:
+        return block.timestamp
+
+    block_ = await get_block(
+        block_number=block_number, client=info.context["starknet_client"]
+    )
+
+    # TODO: make sure block_.timestamp is a real timestamp that could be passed to
+    # datetime.fromtimestamp
+    return datetime.fromtimestamp(block_.timestamp)
+
+
+# serializers could take info, block and event parameter just like from_event
+# see the block_number_serializer above for an example
+Serializer = Union[
+    Callable[[Any], Any], Callable[[Any, Info, BlockHeader, StarkNetEvent], Any]
+]
+
+
+class FromEventMixin:
+    deserializers: dict[Type, Serializer] = {
+        int: lambda x: x,
+        BlockNumber: deserialize_block_number,
+        bytes: int_to_bytes,
+        str: felt_to_str,
+    }
 
     @classmethod
     async def from_event(cls, info: Info, block: BlockHeader, event: StarkNetEvent):
         python_data = await deserialize_event(info=info, block=block, event=event)
-        return cls(
-            id=python_data.id,
-            title=felt_to_str(python_data.title),
-            type=felt_to_str(python_data.type),
-            description=felt_to_str(python_data.description),
-            # python_data.submittedAt is the block number
-            submitted_at=block.timestamp,
-            submitted_by=int_to_bytes(python_data.submittedBy),
-        )
+
+        # TODO: validate the matching between the fields and their types in python_data and __annotations__
+        kwargs = {}
+        for name, field_type in cls.__annotations__.items():
+            if deserializer := cls.deserializers.get(field_type):
+                value = getattr(python_data, name)
+
+                # Pass info, block and event arguments if the serializer accepts them
+                if function_accepts(deserializer, ("info", "block", "event")):
+                    deserialized_value = deserializer(
+                        value, info=info, block=block, event=event
+                    )
+                else:
+                    deserialized_value = deserializer(value)
+
+                if asyncio.iscoroutine(deserialized_value):
+                    deserialized_value = await deserialized_value
+
+                kwargs[name] = deserialized_value
+            else:
+                raise ValueError(f"No deserializer found for type {field_type}")
+
+        return cls(**kwargs)
+
+
+@dataclass
+class ProposalAdded(FromEventMixin):
+    id: int
+    title: str
+    type: str
+    description: str
+    submittedAt: BlockNumber
+    submittedBy: bytes
+
+
+@dataclass
+class OnboardProposalAdded(FromEventMixin):
+    id: int
+    address: bytes
+    shares: int
+    loot: int
+    tributeOffered: int
+    tributeAddress: bytes

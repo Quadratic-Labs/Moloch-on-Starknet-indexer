@@ -12,6 +12,7 @@ from grpc.aio import AioRpcError
 from grpc_requests.aio import AsyncClient
 from python_on_whales import Container, DockerClient
 from apibara import Info, NewEvents, EventFilter
+from pymongo.database import Database
 
 from .. import config
 from indexer.indexer import run_indexer
@@ -113,19 +114,45 @@ async def default_new_events_handler_test(info: Info, block_events: NewEvents):
     await info.storage.insert_many("events", events)
 
 
-def str_to_felt(text):
+def str_to_felt(text: str) -> int:
+    if len(text) > 31:
+        raise ValueError(
+            f"Cannot convert '{text}' to felt because it has more than 31 chars ({len(text)})"
+        )
     b_text = bytes(text, "ascii")
     return int.from_bytes(b_text, "big")
 
 
-def felt_to_str(felt: Union[int, list[int]]) -> str:
-    if isinstance(felt, list):
-        if len(felt) == 1:
-            felt = felt[0]
-        else:
-            raise ValueError(
-                f"felt should be either an int or a list with a single int element, got: {felt}"
-            )
-
+def felt_to_str(felt: int) -> str:
     length = (felt.bit_length() + 7) // 8
     return felt.to_bytes(length, byteorder="big").decode("utf-8")
+
+
+def int_to_uint256(a: int) -> tuple:
+    """Takes in value, returns uint256-ish tuple."""
+    return (a & ((1 << 128) - 1), a >> 128)
+
+
+def int_to_uint256_dict(a: int) -> dict[str, int]:
+    """Takes int value, returns uint256-ish dict."""
+    low, high = int_to_uint256(a)
+    return {"low": low, "high": high}
+
+
+def uint256_dict_to_int(a: dict[str, int]) -> int:
+    """Takes uint256-ish dict value, returns int value."""
+    return uint256_to_int((a["low"], a["high"]))
+
+
+def uint256_to_int(uint: tuple) -> int:
+    """Takes in uint256-ish tuple, returns value."""
+    return uint[0] + (uint[1] << 128)
+
+
+def int_to_bytes(a: int) -> bytes:
+    length = (a.bit_length() + 7) // 8
+    return a.to_bytes(length, byteorder="big")
+
+
+def bytes_to_int(a: bytes) -> int:
+    return int.from_bytes(a, "big")

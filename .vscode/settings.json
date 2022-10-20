@@ -9,6 +9,7 @@
         "apibara",
         "backoff",
         "coro",
+        "deserializers",
         "devnet",
         "predeployed",
         "STARKNET"

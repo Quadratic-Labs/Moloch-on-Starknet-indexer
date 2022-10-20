@@ -10,7 +10,7 @@ from starknet_py.utils.data_transformer.data_transformer import DataTransformer
 from starknet_py.net.gateway_client import GatewayClient
 
 
-from .deserializer import ProposalAdded
+from .events import ProposalAdded, OnboardProposalAdded
 from . import config
 
 
@@ -23,15 +23,27 @@ async def handle_proposal_added_event(
     await info.storage.insert_one("proposals", asdict(proposal_added))
 
 
-async def handle_xxxx_event(info: Info, block: BlockHeader, event: StarkNetEvent):
-    pass
+async def handle_onboard_proposal_added_event(
+    info: Info, block: BlockHeader, event: StarkNetEvent
+):
+    onboard_proposal_added = await OnboardProposalAdded.from_event(
+        info=info, block=block, event=event
+    )
+
+    logger.debug("Updating onboard proposal %s", onboard_proposal_added)
+    existing = await info.storage.find_one_and_update(
+        "proposals",
+        {"id": onboard_proposal_added.id},
+        {"$set": asdict(onboard_proposal_added)},
+    )
+    logger.debug("Existing proposal %s", existing)
 
 
 EventHandler = Callable[[Info, BlockHeader, StarkNetEvent], Coroutine[Any, Any, None]]
 
 DEFAULT_EVENT_HANDLERS: dict[str, EventHandler] = {
     "ProposalAdded": handle_proposal_added_event,
-    "xxxx": handle_xxxx_event,
+    "OnboardProposalAdded": handle_onboard_proposal_added_event,
 }
 
 logger = logging.getLogger(__name__)
