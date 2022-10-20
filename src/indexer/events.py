@@ -13,8 +13,8 @@ class ProposalAdded(FromEventMixin):
     title: str
     type: str
     description: str
-    submitted_at: BlockNumber
-    submitted_by: bytes
+    submittedAt: BlockNumber
+    submittedBy: bytes
 
 
 @dataclass
@@ -23,11 +23,5 @@ class OnboardProposalAdded(FromEventMixin):
     address: bytes
     shares: int
     loot: int
-    tribute_offered: int
-    tribute_address: bytes
-
-
-@dataclass
-class ProposalStatusUpdated(FromEventMixin):
-    id: int
-    status: str
+    tributeOffered: int
+    tributeAddress: bytes

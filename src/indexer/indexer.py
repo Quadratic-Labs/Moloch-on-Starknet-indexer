@@ -10,15 +10,14 @@ from starknet_py.utils.data_transformer.data_transformer import DataTransformer
 from starknet_py.net.gateway_client import GatewayClient
 
 
-from . import config, events
+from .events import ProposalAdded, OnboardProposalAdded
+from . import config
 
 
 async def handle_proposal_added_event(
     info: Info, block: BlockHeader, event: StarkNetEvent
 ):
-    proposal_added = await events.ProposalAdded.from_event(
-        info=info, block=block, event=event
-    )
+    proposal_added = await ProposalAdded.from_event(info=info, block=block, event=event)
 
     logger.debug("Inserting %s", proposal_added)
     await info.storage.insert_one("proposals", asdict(proposal_added))
@@ -27,7 +26,7 @@ async def handle_proposal_added_event(
 async def handle_onboard_proposal_added_event(
     info: Info, block: BlockHeader, event: StarkNetEvent
 ):
-    onboard_proposal_added = await events.OnboardProposalAdded.from_event(
+    onboard_proposal_added = await OnboardProposalAdded.from_event(
         info=info, block=block, event=event
     )
 
