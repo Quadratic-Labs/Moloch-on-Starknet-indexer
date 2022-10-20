@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Callable, NamedTuple, Type, Union
 
+import stringcase
 from apibara import Info
 from apibara.model import BlockHeader, StarkNetEvent
 from starknet_py.utils.data_transformer.data_transformer import CairoSerializer
@@ -82,7 +83,9 @@ class FromEventMixin:
         kwargs = {}
         for name, field_type in cls.__annotations__.items():
             if deserializer := cls.deserializers.get(field_type):
-                value = getattr(python_data, name)
+                # attributes in cairo-contracts use camel case instead of snake case
+                # we have to convert the dataclass attribute name
+                value = getattr(python_data, stringcase.camelcase(name))
 
                 # Pass info, block and event arguments if the serializer accepts them
                 if function_accepts(deserializer, ("info", "block", "event")):
@@ -100,23 +103,3 @@ class FromEventMixin:
                 raise ValueError(f"No deserializer found for type {field_type}")
 
         return cls(**kwargs)
-
-
-@dataclass
-class ProposalAdded(FromEventMixin):
-    id: int
-    title: str
-    type: str
-    description: str
-    submittedAt: BlockNumber
-    submittedBy: bytes
-
-
-@dataclass
-class OnboardProposalAdded(FromEventMixin):
-    id: int
-    address: bytes
-    shares: int
-    loot: int
-    tributeOffered: int
-    tributeAddress: bytes

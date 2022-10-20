@@ -1276,6 +1276,14 @@ pydantic = ["pydantic (<2)"]
 sanic = ["sanic (>=20.12.2,<22.0.0)"]
 
 [[package]]
+name = "stringcase"
+version = "1.2.0"
+description = "String case converter."
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "sympy"
 version = "1.11.1"
 description = "Computer algebra system (CAS) in Python"
@@ -1436,7 +1444,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.10"
-content-hash = "fe12f34d1cd7f4ccce55ee6a718db674909b2c8e7b21b322cfb6e4934222cce0"
+content-hash = "83080bd9e97f3a24a38a0b1a6364aa720352fe547e0b31e9896d1459f1cf3aa3"
 
 [metadata.files]
 aiochannel = [
@@ -2695,6 +2703,9 @@ starlette = [
 strawberry-graphql = [
     {file = "strawberry_graphql-0.133.7-py3-none-any.whl", hash = "sha256:3efb19086fc17cc18e2d231a4e519cc07ee106c7efe2bbd01a0e30e2bb162086"},
     {file = "strawberry_graphql-0.133.7.tar.gz", hash = "sha256:c24de5cb6a46085b9b8729c061af612f7bb3a84128490b498543da27cfa1bb5a"},
+]
+stringcase = [
+    {file = "stringcase-1.2.0.tar.gz", hash = "sha256:48a06980661908efe8d9d34eab2b6c13aefa2163b3ced26972902e3bdfd87008"},
 ]
 sympy = [
     {file = "sympy-1.11.1-py3-none-any.whl", hash = "sha256:938f984ee2b1e8eae8a07b884c8b7a1146010040fccddc6539c54f401c8f6fcf"},

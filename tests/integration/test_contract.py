@@ -71,7 +71,6 @@ async def test_submit_onboard_event(
     tribute_address=constants.FEE_TOKEN_ADDRESS,
     tribute_offered=0,
 ):
-    # address: felt, shares: felt, loot: felt,tributeOffered: Uint256, tributeAddress: felt,title: felt, description: felt
     invoke_result = await contract.functions["submitOnboard"].invoke(
         title=str_to_felt(title),
         description=str_to_felt(description),
@@ -228,5 +227,5 @@ async def test_indexer_onboard_added(
     assert proposal["address"] == int_to_bytes(address)
     assert proposal["loot"] == loot
     assert proposal["shares"] == shares
-    assert proposal["tributeAddress"] == int_to_bytes(tribute_address)
-    assert proposal["tributeOffered"] == tribute_offered
+    assert proposal["tribute_address"] == int_to_bytes(tribute_address)
+    assert proposal["tribute_offered"] == tribute_offered
