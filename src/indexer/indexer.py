@@ -65,33 +65,25 @@ async def default_new_events_handler(
             logger.error("Cannot find event_handler for %s", event)
 
 
-DEFAULT_FILTERS = [
-    EventFilter.from_event_name(
-        name="Transfer",
-        address="0x0266b1276d23ffb53d99da3f01be7e29fa024dd33cd7f7b1eb7a46c67891c9d0",
-    ),
-]
-
-
 async def run_indexer(
     server_url,
     mongo_url,
     starknet_network_url,
+    filters: list[EventFilter],
     ssl=True,
     restart: bool = False,
     indexer_id: str = config.INDEXER_ID,
     new_events_handler=default_new_events_handler,
-    filters: list[EventFilter] = None,
 ):
-    if filters is None:
-        filters = DEFAULT_FILTERS
-
     logger.info(
-        "Starting the indexer with server_url=%s, mongo_url=%s, indexer_id=%s restart=%s",
+        "Starting the indexer with server_url=%s, mongo_url=%s, starknet_network_url=%s, indexer_id=%s, restart=%s, ssl=%s, filters=%s",
         server_url,
         mongo_url,
+        starknet_network_url,
         indexer_id,
         restart,
+        ssl,
+        filters,
     )
 
     runner = IndexerRunner(
