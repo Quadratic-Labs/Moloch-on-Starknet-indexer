@@ -96,11 +96,18 @@ async def start(
 
 @cli.command()
 @click.option(
-    "--mongo-url", default=config.MONGO_URL, show_default=True, help="MongoDB url."
+    "--mongo-url", default=config.MONGO_URL, show_default=True, help="MongoDB URL."
+)
+@click.option(
+    "--db-name",
+    default=config.INDEXER_ID.replace("-", "_"),
+    show_default=True,
+    help="MongoDB database name.",
 )
 @async_command
-async def graphql(mongo_url):
+async def graphql(mongo_url, db_name):
     """Start the GraphQL server."""
     await run_graphql_api(
         mongo_url=mongo_url,
+        db_name=db_name,
     )

@@ -1,12 +1,15 @@
 import asyncio
-from datetime import datetime
-from typing import List, NewType, Optional
+from datetime import datetime, timedelta
+import logging
+from typing import List, NewType
 
 import strawberry
 from aiohttp import web
 from pymongo import MongoClient
 from strawberry.aiohttp.views import GraphQLView
-from . import config
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
 
 
 def parse_hex(value):
@@ -24,76 +27,81 @@ HexValue = strawberry.scalar(
 )
 
 
-@strawberry.type
-class Transfer:
-    from_address: HexValue
-    to_address: HexValue
-    timestamp: datetime
+@strawberry.interface
+class Proposal:
+    id: int
+    title: str
+    type: str
+    description: str
+    submittedAt: datetime
+    # When it was bytes, we had this error:
+    # TypeError: Proposal fields cannot be resolved. Unexpected type '<class 'bytes'>'
+    submittedBy: HexValue
 
-    @classmethod
-    def from_mongo(cls, data):
-        return cls(
-            from_address=data["from_address"],
-            to_address=data["to_address"],
-            timestamp=data["timestamp"],
-        )
-
-
-@strawberry.type
-class Token:
-    token_id: HexValue
-    owner: HexValue
-    updated_at: datetime
+    majority: int
+    quorum: int
+    votingDuration: int
+    graceDuration: int
 
     @strawberry.field
-    def transfers(self, info, limit: int = 10, skip: int = 0) -> List[Transfer]:
-        db = info.context["db"]
-        query = (
-            db["transfers"]
-            .find({"token_id": self.token_id})
-            .limit(limit)
-            .skip(skip)
-            .sort("timestamp", -1)
-        )
+    def votingDurationEndingAt(self) -> datetime:
+        return self.submittedAt + timedelta(minutes=self.votingDuration)
 
-        return [Transfer.from_mongo(t) for t in query]
+    @strawberry.field
+    def gracePeriodEndingAt(self) -> datetime:
+        return self.submittedAt + timedelta(minutes=self.graceDuration)
+
+    @strawberry.field
+    def active(self) -> bool:
+        return True
 
     @classmethod
     def from_mongo(cls, data):
-        return cls(
-            token_id=data["token_id"],
-            owner=data["owner"],
-            updated_at=data["updated_at"],
-        )
+        logger.debug("Creating from mongo: %s", data)
+        kwargs = {
+            name: value for name, value in data.items() if name in cls.__annotations__
+        }
+        logger.debug("Annotaions: %s", cls.__annotations__)
+        logger.debug("Creating with kwargs: %s", kwargs)
+        return cls(**kwargs)
 
 
-def get_token_by_id(info, id: HexValue) -> Optional[Token]:
-    db = info.context["db"]
-    token = db["tokens"].find_one({"token_id": id, "_chain.valid_to": None})
+@strawberry.type
+class Onboard(Proposal):
+    id: int
+    title: str
+    type: str
+    description: str
+    submittedAt: datetime
+    # When it was bytes, we had this error:
+    # TypeError: Proposal fields cannot be resolved. Unexpected type '<class 'bytes'>'
+    submittedBy: HexValue
 
-    if token is not None:
-        return Token.from_mongo(token)
-    return None
+    address: HexValue
+    shares: int
+    loot: int
+    tributeOffered: int
+    tributeAddress: HexValue
+
+    majority: int
+    quorum: int
+    votingDuration: int
+    graceDuration: int
 
 
-def get_tokens(
-    info, owner: Optional[HexValue] = None, limit: int = 10, skip: int = 0
-) -> List[Token]:
+def get_proposals(info, limit: int = 10, skip: int = 0) -> List[Proposal]:
     db = info.context["db"]
 
     filter = {"_chain.valid_to": None}
-    if owner is not None:
-        filter["owner"] = owner
 
-    query = db["tokens"].find(filter).skip(skip).limit(limit).sort("updated_at", -1)
+    query = db["proposals"].find(filter).skip(skip).limit(limit).sort("submittedAt", -1)
 
-    return [Token.from_mongo(t) for t in query]
+    return [Onboard.from_mongo(t) for t in query]
 
 
 @strawberry.type
 class Query:
-    tokens: List[Token] = strawberry.field(resolver=get_tokens)
-    token: Optional[Token] = strawberry.field(resolver=get_token_by_id)
+    proposals: List[Proposal] = strawberry.field(resolver=get_proposals)
 
 
 class IndexerGraphQLView(GraphQLView):
@@ -105,13 +113,14 @@ class IndexerGraphQLView(GraphQLView):
         return {"db": self._db}
 
 
-async def run_graphql_api(mongo_url):
+async def run_graphql_api(mongo_url, db_name):
     mongo = MongoClient(mongo_url)
-    db_name = config.INDEXER_ID.replace("-", "_")
     db = mongo[db_name]
 
-    schema = strawberry.Schema(query=Query)
+    schema = strawberry.Schema(query=Query, types=[Onboard])
     view = IndexerGraphQLView(db, schema=schema)
+
+    logger.info(schema.as_str())
 
     app = web.Application()
     app.router.add_route("*", "/graphql", view)
