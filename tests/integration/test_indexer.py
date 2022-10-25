@@ -122,7 +122,7 @@ async def test_onboard_added(
     assert proposal["title"] == title
     assert proposal["description"] == description
     assert proposal["type"] == "Onboard"
-    assert proposal["address"] == utils.int_to_bytes(address)
+    assert proposal["applicantAddress"] == utils.int_to_bytes(address)
     assert proposal["loot"] == loot
     assert proposal["shares"] == shares
     assert proposal["tributeAddress"] == utils.int_to_bytes(tribute_address)
@@ -192,7 +192,7 @@ async def test_swap_added(
     assert proposal["id"] == 0
     assert proposal["title"] == title
     assert proposal["description"] == description
-    assert proposal["type"] == "Order"
+    assert proposal["type"] == "Swap"
     assert proposal["paymentAddress"] == utils.int_to_bytes(paymentAddress)
     assert proposal["tributeAddress"] == utils.int_to_bytes(tributeAddress)
     assert proposal["paymentRequested"] == paymentRequested

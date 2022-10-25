@@ -103,7 +103,7 @@ async def test_onboard(
     )
 
     assert python_data.id == 0
-    assert python_data.address == address
+    assert python_data.applicantAddress == address
     assert python_data.loot == loot
     assert python_data.shares == shares
     assert python_data.tributeAddress == tribute_address
@@ -123,7 +123,7 @@ async def test_swap(
     paymentAddress=constants.FEE_TOKEN_ADDRESS,
     paymentRequested=0,
 ):
-    invoke_result = await contract.functions["submitOrder"].invoke(
+    invoke_result = await contract.functions["submitSwap"].invoke(
         title=utils.str_to_felt(title),
         description=utils.str_to_felt(description),
         tributeAddress=tributeAddress,

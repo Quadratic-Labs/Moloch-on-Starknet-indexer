@@ -103,7 +103,7 @@ class ProposalParamsUpdated(Event):
 @dataclass
 class OnboardProposalAdded(Event, UpdateProposalMixin):
     id: int
-    address: bytes
+    applicantAddress: bytes
     shares: int
     loot: int
     tributeOffered: int
