@@ -7,7 +7,7 @@ import click
 from starknet_py.net.gateway_client import GatewayClient
 from apibara.model import EventFilter
 
-from indexer.graphql import run_graphql_api
+from indexer.graphql import run_graphql
 from indexer.indexer import run_indexer
 from indexer.utils import get_contract, get_contract_events
 from indexer import config
@@ -107,7 +107,7 @@ async def start(
 @async_command
 async def graphql(mongo_url, db_name):
     """Start the GraphQL server."""
-    await run_graphql_api(
+    await run_graphql(
         mongo_url=mongo_url,
         db_name=db_name,
     )

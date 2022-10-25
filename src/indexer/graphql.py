@@ -113,7 +113,9 @@ class IndexerGraphQLView(GraphQLView):
         return {"db": self._db}
 
 
-async def run_graphql_api(mongo_url, db_name):
+async def run_graphql(
+    mongo_url: str, db_name: str, host: str = "localhost", port: int = 8080
+):
     mongo = MongoClient(mongo_url)
     db = mongo[db_name]
 
@@ -127,10 +129,10 @@ async def run_graphql_api(mongo_url, db_name):
 
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, "localhost", "8080")
+    site = web.TCPSite(runner, host, port)
     await site.start()
 
-    print(f"GraphQL server started at http://localhost:8080/graphql")
+    print(f"GraphQL server started at http://{host}:{port}/graphql")
 
     while True:
         await asyncio.sleep(5_000)

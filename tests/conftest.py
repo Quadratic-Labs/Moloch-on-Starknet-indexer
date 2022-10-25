@@ -19,6 +19,7 @@ from starknet_py.net.signer.stark_curve_signer import KeyPair
 from starknet_py.compile.compiler import Compiler
 
 from indexer.indexer import run_indexer
+from indexer.graphql import run_graphql
 from .integration.utils import (
     docker,
     wait_for_apibara,
@@ -35,7 +36,14 @@ class Indexer:
     id: str
 
 
+@dataclass
+class GraphQL:
+    process: Process
+    db_name: str
+
+
 IndexerProcessRunner = Callable[[list[EventFilter], Any], Indexer]
+GraphQLProcessRunner = Callable[[Optional[str]], GraphQL]
 
 
 def pytest_addoption(parser):
@@ -205,3 +213,34 @@ def run_indexer_process(
 @pytest.fixture(scope="session")
 def mongo_client(docker_compose_services) -> pymongo.MongoClient:
     return pymongo.MongoClient(config.MONGO_URL)
+
+
+@pytest.fixture
+def run_graphql_process(
+    # docker_compose_services,
+    request: pytest.FixtureRequest
+) -> GraphQLProcessRunner:
+    def _create_graphql(db_name: Optional[str] = None) -> GraphQL:
+        if db_name is None:
+            db_name = (
+                request.node.name + "_" + datetime.now().strftime("%Y_%m_%d_%H_%I_%M")
+            )
+
+        host, port = config.GRAPHQL_URL.split(":")
+
+        process = Process(
+            target=lambda: asyncio.run(
+                run_graphql(
+                    mongo_url=config.MONGO_URL,
+                    db_name=db_name,
+                    host=host,
+                    port=int(port),
+                ),
+            )
+        )
+        process.start()
+        request.addfinalizer(process.terminate)
+
+        return GraphQL(process, db_name)
+
+    return _create_graphql

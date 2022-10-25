@@ -81,6 +81,20 @@ async def wait_for_devnet():
     is_alive_response.raise_for_status()
 
 
+# TODO: use a more specific exception than RequestException
+@backoff.on_exception(
+    backoff.constant,
+    requests.RequestException,
+    max_time=config.DEFAULT_MAX_BACKOFF_TIME,
+)
+async def wait_for_graphql() -> bool:
+    # TODO: use gql client instead
+    url = f"http://{config.GRAPHQL_URL}/graphql?query=%7B__typename%7D"
+    response = requests.get(url, timeout=1)
+    response.raise_for_status()
+    return True
+
+
 @backoff.on_exception(
     backoff.constant, AioRpcError, max_time=config.DEFAULT_MAX_BACKOFF_TIME
 )
