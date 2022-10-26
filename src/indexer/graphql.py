@@ -77,7 +77,7 @@ class Onboard(Proposal):
     # TypeError: Proposal fields cannot be resolved. Unexpected type '<class 'bytes'>'
     submittedBy: HexValue
 
-    address: HexValue
+    applicantAddress: HexValue
     shares: int
     loot: int
     tributeOffered: int
