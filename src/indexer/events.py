@@ -12,6 +12,7 @@ from apibara.model import BlockHeader, StarkNetEvent
 
 from indexer.utils import get_block_datetime_utc
 from .deserializer import BlockNumber
+from .models import ProposalStatus
 
 
 logger = logging.getLogger(__name__)
@@ -62,8 +63,18 @@ class ProposalAdded(Event):
     async def _handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
-        logger.debug("Inserting %s", self)
-        await info.storage.insert_one("proposals", asdict(self))
+        proposal_dict = {
+            **asdict(self),
+            "status": ProposalStatus.SUBMITTED.value,
+            "statusHistory": [
+                (
+                    ProposalStatus.SUBMITTED.value,
+                    get_block_datetime_utc(block),
+                )
+            ],
+        }
+        logger.debug("Inserting ProposalAdded(%s)", proposal_dict)
+        await info.storage.insert_one("proposals", proposal_dict)
 
         proposal_params = await info.storage.find_one(
             "proposal_params", {"type": self.type}

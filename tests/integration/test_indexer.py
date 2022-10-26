@@ -63,6 +63,10 @@ async def test_proposal_added(
     assert proposal["type"] == "Signaling"
     assert proposal["submittedBy"] == utils.int_to_bytes(client.address)
     assert proposal["submittedAt"] == block_datetime
+    assert proposal["status"] == ProposalStatus.SUBMITTED.value
+    assert proposal["statusHistory"] == [
+        [ProposalStatus.SUBMITTED.value, block_datetime]
+    ]
 
 
 async def test_onboard_added(
