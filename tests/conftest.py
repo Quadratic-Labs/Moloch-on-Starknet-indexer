@@ -212,13 +212,13 @@ def run_indexer_process(
 
 @pytest.fixture(scope="session")
 def mongo_client(docker_compose_services) -> pymongo.MongoClient:
-    return pymongo.MongoClient(config.MONGO_URL)
+    return pymongo.MongoClient(config.MONGO_URL, tz_aware=True)
 
 
 @pytest.fixture
 def run_graphql_process(
     # docker_compose_services,
-    request: pytest.FixtureRequest
+    request: pytest.FixtureRequest,
 ) -> GraphQLProcessRunner:
     def _create_graphql(db_name: Optional[str] = None) -> GraphQL:
         if db_name is None:

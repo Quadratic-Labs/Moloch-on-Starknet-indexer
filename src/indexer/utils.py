@@ -1,10 +1,12 @@
+from datetime import datetime, timezone
 from functools import wraps, lru_cache
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Union
 
 from cachetools import LRUCache, keys
 from starknet_py.contract import Contract
 from starknet_py.net.client_models import GatewayBlock
 from starknet_py.net.gateway_client import GatewayClient
+from apibara.model import BlockHeader
 from cachetools import keys
 
 
@@ -68,6 +70,17 @@ async def get_contract(address, client: GatewayClient) -> Contract:
 @async_cached(cache=LRUCache(maxsize=128))
 async def get_block(block_number: int, client: GatewayClient) -> GatewayBlock:
     return await client.get_block(block_number=block_number)
+
+
+def get_block_datetime_utc(block: Union[GatewayBlock, BlockHeader]) -> datetime:
+    if isinstance(block, GatewayBlock):
+        return datetime.fromtimestamp(block.timestamp, timezone.utc)
+    elif isinstance(block, BlockHeader):
+        return block.timestamp.replace(tzinfo=timezone.utc)
+    else:
+        raise ValueError(
+            f"block should be either GatewayBlock or BlockHeader, got {block} of type {type(block)}"
+        )
 
 
 @lru_cache(maxsize=128)

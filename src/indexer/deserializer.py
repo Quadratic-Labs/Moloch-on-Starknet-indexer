@@ -1,6 +1,6 @@
 import asyncio
-from datetime import datetime
-from typing import Any, Callable, NamedTuple, Type, Union
+from datetime import datetime, timezone
+from typing import Any, Callable, Type, Union
 
 from apibara import Info
 from apibara.model import BlockHeader, StarkNetEvent
@@ -13,6 +13,7 @@ from .utils import (
     get_contract,
     get_contract_events,
     get_block,
+    get_block_datetime_utc,
 )
 
 
@@ -26,16 +27,12 @@ async def deserialize_block_number(
     block: BlockHeader,
     starknet_event: StarkNetEvent,
 ) -> datetime:
-    if block.number == block_number:
-        return block.timestamp
+    if block.number != block_number:
+        block = await get_block(
+            block_number=block_number, client=info.context["starknet_client"]
+        )
 
-    block_ = await get_block(
-        block_number=block_number, client=info.context["starknet_client"]
-    )
-
-    # TODO: make sure block_.timestamp is a real timestamp that could be passed to
-    # datetime.fromtimestamp
-    return datetime.fromtimestamp(block_.timestamp)
+    return get_block_datetime_utc(block)
 
 
 # serializers could take info, block and event parameter just like from_starknet_event

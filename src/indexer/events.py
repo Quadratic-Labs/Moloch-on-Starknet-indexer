@@ -3,13 +3,16 @@ in instance from a `StarkNetEvent`, the from_starknet_event method uses the type
 given in the dataclass to know how to deserialize the values
 """
 
+from dataclasses import dataclass, asdict
 import logging
 from typing import Type
 
 from apibara import Info
 from apibara.model import BlockHeader, StarkNetEvent
-from dataclasses import dataclass, asdict
-from .deserializer import BlockNumber, deserialize_starknet_event
+
+from indexer.utils import get_block_datetime_utc
+from .deserializer import BlockNumber
+
 
 logger = logging.getLogger(__name__)
 

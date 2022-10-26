@@ -3,10 +3,12 @@ from apibara import EventFilter
 from starknet_py.contract import Contract
 from starknet_py.net.account.account_client import AccountClient
 
+
 from ..conftest import IndexerProcessRunner
 from . import constants, test_events, utils
 from indexer.indexer import default_new_events_handler
 from indexer.models import ProposalStatus
+from indexer.utils import get_block_datetime_utc
 
 
 async def test_proposal_added(
@@ -45,16 +47,22 @@ async def test_proposal_added(
     # our events were processed
     utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
 
+    block = await client.get_block(transaction_receipt.block_hash)
+
     proposals = list(mongo_db["proposals"].find({"_chain.valid_to": None}))
     assert len(proposals) == 1
 
     proposal = proposals[0]
+
+    block_datetime = get_block_datetime_utc(block)
 
     # assert int(event["address"].hex(), 16) == contract.address
     assert proposal["id"] == 0
     assert proposal["title"] == title
     assert proposal["description"] == description
     assert proposal["type"] == "Signaling"
+    assert proposal["submittedBy"] == utils.int_to_bytes(client.address)
+    assert proposal["submittedAt"] == block_datetime
 
 
 async def test_onboard_added(

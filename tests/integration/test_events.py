@@ -44,6 +44,8 @@ async def test_signaling(
 
     assert utils.felt_to_str(python_data.title) == title
     assert utils.felt_to_str(python_data.description) == description
+    assert python_data.submittedAt == transaction_receipt.block_number
+    assert python_data.submittedBy == client.address
 
     return transaction_receipt
 
