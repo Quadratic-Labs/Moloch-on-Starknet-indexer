@@ -41,20 +41,18 @@ async def test_proposal_added(
         title=title,
         description=description,
     )
+    block = await client.get_block(transaction_receipt.block_hash)
+    block_datetime = get_block_datetime_utc(block)
 
     mongo_db = mongo_client[indexer.id]
     # Wait for the indexer to reach the transaction block_number to be sure
     # our events were processed
     utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
 
-    block = await client.get_block(transaction_receipt.block_hash)
-
     proposals = list(mongo_db["proposals"].find({"_chain.valid_to": None}))
     assert len(proposals) == 1
 
     proposal = proposals[0]
-
-    block_datetime = get_block_datetime_utc(block)
 
     # assert int(event["address"].hex(), 16) == contract.address
     assert proposal["id"] == 0
@@ -117,6 +115,8 @@ async def test_onboard_added(
         tribute_address=tribute_address,
         tribute_offered=tribute_offered,
     )
+    block = await client.get_block(transaction_receipt.block_hash)
+    block_datetime = get_block_datetime_utc(block)
 
     mongo_db = mongo_client[indexer.id]
     # Wait for the indexer to reach the transaction block_number to be sure
@@ -140,6 +140,10 @@ async def test_onboard_added(
     assert proposal["tributeAddress"] == utils.int_to_bytes(tribute_address)
     assert proposal["tributeOffered"] == tribute_offered
     assert proposal["status"] == ProposalStatus.FORCED.value
+    assert proposal["statusHistory"] == [
+        [ProposalStatus.SUBMITTED.value, block_datetime],
+        [ProposalStatus.FORCED.value, block_datetime],
+    ]
 
 
 async def test_swap_added(

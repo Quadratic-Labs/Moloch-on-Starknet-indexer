@@ -38,6 +38,8 @@ class Event:
         await self._handle(info, block, starknet_event)
 
 
+# TODO: make it a function instead, since we're calling it anyways. Otherwise
+#   use inheritance to avoid calling it manually (override _handle)
 class UpdateProposalMixin:
     async def _update_proposal(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
@@ -81,7 +83,7 @@ class ProposalAdded(Event):
         )
 
         if proposal_params is None:
-            # TODO: find a better exception for that
+            # TODO: find a better / more specific exception class
             raise Exception(
                 f"Cannot find proposal params(majority, quorum ...) for type"
                 f" '{self.type}' in 'proposal_params' collection, check if the"
@@ -138,8 +140,20 @@ class ProposalStatusUpdated(Event, UpdateProposalMixin):
     async def _handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
+        await self._update_proposal(info, block, starknet_event)
 
-        return await self._update_proposal(info, block, starknet_event)
+        await info.storage.find_one_and_update(
+            "proposals",
+            {"id": self.id},
+            {
+                "$push": {
+                    "statusHistory": (
+                        ProposalStatus(self.status).value,
+                        get_block_datetime_utc(block),
+                    )
+                }
+            },
+        )
 
 
 @dataclass
@@ -154,7 +168,7 @@ class GuildKickProposalAdded(Event, UpdateProposalMixin):
 
 
 @dataclass
-class WhitelisteProposalAdded(Event, UpdateProposalMixin):
+class WhitelistProposalAdded(Event, UpdateProposalMixin):
     tokenName: str
     tokenAddress: bytes
 
@@ -165,7 +179,7 @@ class WhitelisteProposalAdded(Event, UpdateProposalMixin):
 
 
 @dataclass
-class UnWhitelisteProposalAdded(Event, UpdateProposalMixin):
+class UnWhitelistProposalAdded(Event, UpdateProposalMixin):
     tokenName: str
     tokenAddress: bytes
 
