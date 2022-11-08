@@ -20,9 +20,7 @@ async def test_contract_abi(sample_contract: Contract, sample_contract_file: Pat
     assert sample_contract.data.abi == contract_abi
 
 
-async def test_invoke(
-    sample_contract: Contract, client: AccountClient, account: Account
-):
+async def test_invoke(sample_contract: Contract, client: AccountClient):
     amount = 10
 
     invoke_result = await sample_contract.functions["increase_balance"].invoke(
@@ -30,7 +28,7 @@ async def test_invoke(
     )
     await invoke_result.wait_for_acceptance()
 
-    call_result = await sample_contract.functions["get_balance"].call(account.address)
+    call_result = await sample_contract.functions["get_balance"].call(client.address)
     assert call_result.res == amount
 
 

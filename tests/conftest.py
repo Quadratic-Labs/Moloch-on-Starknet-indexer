@@ -197,7 +197,7 @@ def run_indexer_process(
         filters: list[EventFilter], new_events_handler=default_new_events_handler_test
     ) -> Indexer:
         indexer_id = (
-            request.node.name + "_" + datetime.now().strftime("%Y_%m_%d_%H_%I_%M")
+            request.node.name + "_" + datetime.now().strftime("%Y_%m_%d_%H_%I_%M_%f")
         )
         process = Process(
             target=lambda: asyncio.run(

@@ -38,19 +38,20 @@ class Event:
         await self._handle(info, block, starknet_event)
 
 
-# TODO: make it a function instead, since we're calling it anyways. Otherwise
-#   use inheritance to avoid calling it manually (override _handle)
-class UpdateProposalMixin:
-    async def _update_proposal(
-        self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
-    ):
-        logger.debug("Updating proposal %s", self)
-        existing = await info.storage.find_one_and_update(
-            collection="proposals",
-            filter={"id": self.id},
-            update={"$set": asdict(self)},
-        )
-        logger.debug("Existing proposal %s", existing)
+async def update_proposal(
+    id: int,
+    document: dict,
+    info: Info,
+    block: BlockHeader,
+    starknet_event: StarkNetEvent,
+):
+    logger.debug("Updating proposal %s with %s", id, document)
+    existing = await info.storage.find_one_and_update(
+        collection="proposals",
+        filter={"id": id},
+        update={"$set": document},
+    )
+    logger.debug("Existing proposal %s", existing)
 
 
 @dataclass
@@ -117,7 +118,7 @@ class ProposalParamsUpdated(Event):
 
 
 @dataclass
-class OnboardProposalAdded(Event, UpdateProposalMixin):
+class OnboardProposalAdded(Event):
     id: int
     applicantAddress: bytes
     shares: int
@@ -129,18 +130,30 @@ class OnboardProposalAdded(Event, UpdateProposalMixin):
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
 
-        return await self._update_proposal(info, block, starknet_event)
+        return await update_proposal(
+            id=self.id,
+            document=asdict(self),
+            info=info,
+            block=block,
+            starknet_event=starknet_event,
+        )
 
 
 @dataclass
-class ProposalStatusUpdated(Event, UpdateProposalMixin):
+class ProposalStatusUpdated(Event):
     id: int
     status: int
 
     async def _handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
-        await self._update_proposal(info, block, starknet_event)
+        await update_proposal(
+            id=self.id,
+            document=asdict(self),
+            info=info,
+            block=block,
+            starknet_event=starknet_event,
+        )
 
         await info.storage.find_one_and_update(
             collection="proposals",
@@ -157,40 +170,58 @@ class ProposalStatusUpdated(Event, UpdateProposalMixin):
 
 
 @dataclass
-class GuildKickProposalAdded(Event, UpdateProposalMixin):
+class GuildKickProposalAdded(Event):
     id: int
     memberAddress: bytes
 
     async def _handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
-        return await self._update_proposal(info, block, starknet_event)
+        return await update_proposal(
+            id=self.id,
+            document=asdict(self),
+            info=info,
+            block=block,
+            starknet_event=starknet_event,
+        )
 
 
 @dataclass
-class WhitelistProposalAdded(Event, UpdateProposalMixin):
+class WhitelistProposalAdded(Event):
     tokenName: str
     tokenAddress: bytes
 
     async def _handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
-        return await self._update_proposal(info, block, starknet_event)
+        return await update_proposal(
+            id=self.id,
+            document=asdict(self),
+            info=info,
+            block=block,
+            starknet_event=starknet_event,
+        )
 
 
 @dataclass
-class UnWhitelistProposalAdded(Event, UpdateProposalMixin):
+class UnWhitelistProposalAdded(Event):
     tokenName: str
     tokenAddress: bytes
 
     async def _handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
-        return await self._update_proposal(info, block, starknet_event)
+        return await update_proposal(
+            id=self.id,
+            document=asdict(self),
+            info=info,
+            block=block,
+            starknet_event=starknet_event,
+        )
 
 
 @dataclass
-class SwapProposalAdded(Event, UpdateProposalMixin):
+class SwapProposalAdded(Event):
     id: int
     tributeAddress: bytes
     tributeOffered: int
@@ -200,7 +231,13 @@ class SwapProposalAdded(Event, UpdateProposalMixin):
     async def _handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
-        return await self._update_proposal(info, block, starknet_event)
+        return await update_proposal(
+            id=self.id,
+            document=asdict(self),
+            info=info,
+            block=block,
+            starknet_event=starknet_event,
+        )
 
 
 # func VoteSubmitted(callerAddress: felt, proposalId: felt, vote: felt, onBehalfAddress: felt) {
