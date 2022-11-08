@@ -46,9 +46,9 @@ class UpdateProposalMixin:
     ):
         logger.debug("Updating proposal %s", self)
         existing = await info.storage.find_one_and_update(
-            "proposals",
-            {"id": self.id},
-            {"$set": asdict(self)},
+            collection="proposals",
+            filter={"id": self.id},
+            update={"$set": asdict(self)},
         )
         logger.debug("Existing proposal %s", existing)
 
@@ -94,9 +94,9 @@ class ProposalAdded(Event):
 
         logger.debug("Updating proposal %s", self)
         existing = await info.storage.find_one_and_update(
-            "proposals",
-            {"id": self.id},
-            {"$set": proposal_params},
+            collection="proposals",
+            filter={"id": self.id},
+            update={"$set": proposal_params},
         )
         logger.debug("Existing proposal %s", existing)
 
@@ -143,9 +143,9 @@ class ProposalStatusUpdated(Event, UpdateProposalMixin):
         await self._update_proposal(info, block, starknet_event)
 
         await info.storage.find_one_and_update(
-            "proposals",
-            {"id": self.id},
-            {
+            collection="proposals",
+            filter={"id": self.id},
+            update={
                 "$push": {
                     "statusHistory": (
                         ProposalStatus(self.status).value,
@@ -203,10 +203,40 @@ class SwapProposalAdded(Event, UpdateProposalMixin):
         return await self._update_proposal(info, block, starknet_event)
 
 
+# func VoteSubmitted(callerAddress: felt, proposalId: felt, vote: felt, onBehalfAddress: felt) {
+@dataclass
+class VoteSubmitted(Event):
+    callerAddress: bytes
+    proposalId: int
+    vote: bool
+    onBehalfAddress: bytes
+
+    async def _handle(
+        self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
+    ):
+        # TODO: store both calledAddress and onBehalfAddress, we'll need to know
+        # who voted at some point
+        if self.vote:
+            update_proposal_vote = {"$push": {"yesVotes": self.onBehalfAddress}}
+        else:
+            update_proposal_vote = {"$push": {"noVotes": self.onBehalfAddress}}
+
+        await info.storage.find_one_and_update(
+            collection="proposals",
+            filter={"id": self.proposalId},
+            update=update_proposal_vote,
+        )
+
+        # TODO: add the proposalId to the member whenever we're indexing members
+
+        return await super()._handle(info, block, starknet_event)
+
+
 ALL_EVENTS: dict[str, Type[Event]] = {
     "ProposalAdded": ProposalAdded,
     "OnboardProposalAdded": OnboardProposalAdded,
     "ProposalStatusUpdated": ProposalStatusUpdated,
     "ProposalParamsUpdated": ProposalParamsUpdated,
     "SwapProposalAdded": SwapProposalAdded,
+    "VoteSubmitted": VoteSubmitted,
 }

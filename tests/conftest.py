@@ -90,21 +90,32 @@ async def docker_compose_services(request: pytest.FixtureRequest) -> list[Contai
 
 
 @pytest.fixture(scope="session")
-def account() -> Account:
+def predeployed_accounts() -> list[Account]:
     url = os.path.join(config.STARKNET_NETWORK_URL, "predeployed_accounts")
     predeployed_accounts = requests.get(url, timeout=5).json()
-    first_account = predeployed_accounts[0]
 
-    return Account(
-        address=int(first_account["address"], 16),
-        private_key=int(first_account["private_key"], 16),
-        public_key=int(first_account["public_key"], 16),
-    )
+    return [
+        Account(
+            address=int(account["address"], 16),
+            private_key=int(account["private_key"], 16),
+            public_key=int(account["public_key"], 16),
+        )
+        for account in predeployed_accounts
+    ]
+
+
+# @pytest.fixture(scope="session")
+# def account(predeployed_accounts: list[Account]) -> Account:
+#     return predeployed_accounts[0]
 
 
 @pytest.fixture(scope="session")
-def client(docker_compose_services, account) -> AccountClient:
+def client(
+    docker_compose_services, predeployed_accounts: list[Account]
+) -> AccountClient:
     client = GatewayClient(config.STARKNET_NETWORK_URL)
+
+    account = predeployed_accounts[0]
 
     return AccountClient(
         address=account.address,

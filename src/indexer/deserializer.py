@@ -44,6 +44,7 @@ Serializer = Union[
 
 deserializers: dict[Type, Serializer] = {
     int: lambda x: x,
+    bool: lambda x: x,
     BlockNumber: deserialize_block_number,
     bytes: int_to_bytes,
     str: felt_to_str,
