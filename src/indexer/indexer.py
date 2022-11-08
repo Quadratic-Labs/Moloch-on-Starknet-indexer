@@ -44,7 +44,7 @@ async def default_new_events_handler(
                 info=info, block=block_events.block, starknet_event=starknet_event
             )
         else:
-            logger.error("Cannot find event_handler for %s", starknet_event)
+            logger.error("Cannot find event handler for %s", starknet_event)
 
 
 async def run_indexer(

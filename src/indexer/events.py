@@ -266,7 +266,22 @@ class VoteSubmitted(Event):
 
         # TODO: add the proposalId to the member whenever we're indexing members
 
-        return await super()._handle(info, block, starknet_event)
+
+@dataclass
+class MemberAdded(Event):
+    memberAddress: bytes
+    shares: int
+    loot: int
+
+    async def _handle(
+        self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
+    ):
+
+        member_dict = {
+            **asdict(self),
+            "onboardedAt": get_block_datetime_utc(block),
+        }
+        await info.storage.insert_one("members", member_dict)
 
 
 ALL_EVENTS: dict[str, Type[Event]] = {
@@ -276,4 +291,5 @@ ALL_EVENTS: dict[str, Type[Event]] = {
     "ProposalParamsUpdated": ProposalParamsUpdated,
     "SwapProposalAdded": SwapProposalAdded,
     "VoteSubmitted": VoteSubmitted,
+    "MemberAdded": MemberAdded,
 }

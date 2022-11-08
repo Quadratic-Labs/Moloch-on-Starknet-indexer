@@ -115,16 +115,14 @@ def wait_for_indexer(mongo_db: Database, block_number: int):
     It could be used during tests to ensure some events were processed before
     reading the mongo db
     """
-    document = mongo_db["_apibara"].find_one({"indexer_id": mongo_db.name})
-    indexed_to = document["indexed_to"]
-
-    logger.debug(
-        "Waiting for indexer to reach block_number=%s, it's now at block_number=%s",
-        block_number,
-        indexed_to,
-    )
-
-    return indexed_to >= block_number
+    if document := mongo_db["_apibara"].find_one({"indexer_id": mongo_db.name}):
+        indexed_to = document["indexed_to"]
+        logger.debug(
+            "Waiting for indexer to reach block_number=%s, it's now at block_number=%s",
+            block_number,
+            indexed_to,
+        )
+        return indexed_to >= block_number
 
 
 async def default_new_events_handler_test(info: Info, block_events: NewEvents):
