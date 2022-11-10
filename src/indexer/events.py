@@ -59,7 +59,7 @@ class ProposalAdded(Event):
     id: int
     title: str
     type: str
-    description: str
+    link: str
     submittedAt: BlockNumber
     submittedBy: bytes
 

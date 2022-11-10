@@ -20,7 +20,7 @@ async def test_proposal_added(
     mongo_client: pymongo.MongoClient,
 ):
     title = "Indexer signaling event"
-    description = "Indexer signaling description"
+    link = "Indexer signaling link"
 
     filters = [
         EventFilter.from_event_name(
@@ -40,7 +40,7 @@ async def test_proposal_added(
         contract_events=contract_events,
         client=client,
         title=title,
-        description=description,
+        link=link,
     )
     block = await client.get_block(transaction_receipt.block_hash)
     block_datetime = get_block_datetime_utc(block)
@@ -58,7 +58,7 @@ async def test_proposal_added(
     # assert int(event["address"].hex(), 16) == contract.address
     assert proposal["id"] == 0
     assert proposal["title"] == title
-    assert proposal["description"] == description
+    assert proposal["link"] == link
     assert proposal["type"] == "Signaling"
     assert proposal["submittedBy"] == utils.int_to_bytes(client.address)
     assert proposal["submittedAt"] == block_datetime
@@ -77,7 +77,7 @@ async def test_onboard_added(
     predeployed_accounts: list[Account],
 ):
     title = "Indexer onboard event"
-    description = "Indexer onboard description"
+    link = "Indexer onboard link"
     address = predeployed_accounts[1].address
     shares = 1
     loot = 1
@@ -110,7 +110,7 @@ async def test_onboard_added(
         contract_events=contract_events,
         client=client,
         title=title,
-        description=description,
+        link=link,
         address=address,
         shares=shares,
         loot=loot,
@@ -134,7 +134,7 @@ async def test_onboard_added(
 
     assert proposal["id"] == 0
     assert proposal["title"] == title
-    assert proposal["description"] == description
+    assert proposal["link"] == link
     assert proposal["type"] == "Onboard"
     assert proposal["applicantAddress"] == utils.int_to_bytes(address)
     assert proposal["loot"] == loot
@@ -156,7 +156,7 @@ async def test_swap_added(
     mongo_client: pymongo.MongoClient,
 ):
     title = "Indexer swap event"
-    description = "Indexer swap description"
+    link = "Indexer swap link"
     paymentAddress = constants.FEE_TOKEN_ADDRESS
     paymentRequested = 0
     tributeAddress = constants.FEE_TOKEN_ADDRESS
@@ -188,7 +188,7 @@ async def test_swap_added(
         contract_events=contract_events,
         client=client,
         title=title,
-        description=description,
+        link=link,
         paymentAddress=paymentAddress,
         paymentRequested=paymentRequested,
         tributeAddress=tributeAddress,
@@ -209,7 +209,7 @@ async def test_swap_added(
 
     assert proposal["id"] == 0
     assert proposal["title"] == title
-    assert proposal["description"] == description
+    assert proposal["link"] == link
     assert proposal["type"] == "Swap"
     assert proposal["paymentAddress"] == utils.int_to_bytes(paymentAddress)
     assert proposal["tributeAddress"] == utils.int_to_bytes(tributeAddress)
@@ -227,7 +227,7 @@ async def test_vote_submitted(
     mongo_client: pymongo.MongoClient,
 ):
     title = "Indexer signaling event"
-    description = "Indexer signaling description"
+    link = "Indexer signaling link"
 
     filters = [
         EventFilter.from_event_name(
@@ -252,7 +252,7 @@ async def test_vote_submitted(
         contract_events=contract_events,
         client=client,
         title=title,
-        description=description,
+        link=link,
     )
     proposal_block = await client.get_block(proposal_transaction_receipt.block_hash)
     proposal_block_datetime = get_block_datetime_utc(proposal_block)
@@ -270,7 +270,7 @@ async def test_vote_submitted(
     # assert int(event["address"].hex(), 16) == contract.address
     assert proposal["id"] == 0
     assert proposal["title"] == title
-    assert proposal["description"] == description
+    assert proposal["link"] == link
     assert proposal["type"] == "Signaling"
     assert proposal["submittedBy"] == utils.int_to_bytes(client.address)
     assert proposal["rawStatus"] == ProposalRawStatus.SUBMITTED.value

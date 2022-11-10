@@ -12,12 +12,12 @@ async def test_signaling(
     contract_events: dict,
     client: AccountClient,
     title="Signaling event",
-    description="Signaling event description",
+    link="Signaling event link",
 ):
-    # TODO: test description with more than 31 chars
+    # TODO: test link with more than 31 chars
 
     invoke_result = await contract.functions["submitSignaling"].invoke(
-        title=title, description=description, max_fee=10**16
+        title=title, link=link, max_fee=10**16
     )
     await invoke_result.wait_for_acceptance()
 
@@ -31,7 +31,7 @@ async def test_signaling(
     # We can get it from the contract abi
     emitted_event_abi = contract_events["ProposalAdded"]
 
-    # ProposalAdded.emit(id=info.id, title=info.title, description=info.description, type=info.type, submittedBy=info.submittedBy, submittedAt=info.submittedAt);
+    # ProposalAdded.emit(id=info.id, title=info.title, link=info.link, type=info.type, submittedBy=info.submittedBy, submittedAt=info.submittedAt);
 
     # Creates CairoSerializer with contract's identifier manager
     cairo_serializer = CairoSerializer(
@@ -45,7 +45,7 @@ async def test_signaling(
 
     assert python_data.id == 0
     assert utils.felt_to_str(python_data.title) == title
-    assert utils.felt_to_str(python_data.description) == description
+    assert utils.felt_to_str(python_data.link) == link
     assert python_data.submittedAt == transaction_receipt.block_number
     assert python_data.submittedBy == client.address
 
@@ -57,7 +57,7 @@ async def test_onboard(
     contract_events: dict,
     client: AccountClient,
     title="Onboard event",
-    description="Onboard event description",
+    link="Onboard event link",
     address=constants.FEE_TOKEN_ADDRESS,
     shares=1,
     loot=1,
@@ -66,7 +66,7 @@ async def test_onboard(
 ):
     invoke_result = await contract.functions["submitOnboard"].invoke(
         title=utils.str_to_felt(title),
-        description=utils.str_to_felt(description),
+        link=utils.str_to_felt(link),
         address=address,
         shares=shares,
         loot=loot,
@@ -121,7 +121,7 @@ async def test_swap(
     contract_events: dict,
     client: AccountClient,
     title="Onboard event",
-    description="Onboard event description",
+    link="Onboard event link",
     tributeAddress=constants.FEE_TOKEN_ADDRESS,
     tributeOffered=0,
     paymentAddress=constants.FEE_TOKEN_ADDRESS,
@@ -129,7 +129,7 @@ async def test_swap(
 ):
     invoke_result = await contract.functions["submitSwap"].invoke(
         title=utils.str_to_felt(title),
-        description=utils.str_to_felt(description),
+        link=utils.str_to_felt(link),
         tributeAddress=tributeAddress,
         tributeOffered=utils.int_to_uint256_dict(tributeOffered),
         paymentAddress=paymentAddress,
@@ -184,14 +184,14 @@ async def test_vote(
     contract_events: dict,
     client: AccountClient,
     title="Vote event",
-    description="Vote event description",
+    link="Vote event link",
 ):
     proposal_transaction_receipt = await test_signaling(
         contract=contract,
         contract_events=contract_events,
         client=client,
         title=title,
-        description=description,
+        link=link,
     )
 
     # TODO: get proposalId from the previous call ?
@@ -216,7 +216,7 @@ async def test_vote(
     # We can get it from the contract abi
     emitted_event_abi = contract_events["VoteSubmitted"]
 
-    # ProposalAdded.emit(id=info.id, title=info.title, description=info.description, type=info.type, submittedBy=info.submittedBy, submittedAt=info.submittedAt);
+    # ProposalAdded.emit(id=info.id, title=info.title, link=info.link, type=info.type, submittedBy=info.submittedBy, submittedAt=info.submittedAt);
 
     # Creates CairoSerializer with contract's identifier manager
     cairo_serializer = CairoSerializer(

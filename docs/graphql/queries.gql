@@ -11,7 +11,7 @@ query Proposals {
     link
     submitted_at
     submitted_by
-    description
+    link
     accepted_at
     processed_at
     majority

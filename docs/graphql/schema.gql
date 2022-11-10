@@ -78,7 +78,7 @@ type Proposal {
   # Do we need to expose this alongside the StatusFront ?
   # They are not used anywhere in the front end spec
   status: ProposalStatus
-  description: String
+  link: String
 
   # ProposalParams
   majority: Int

@@ -36,7 +36,7 @@ class Proposal:
     id: int
     title: str
     type: str
-    description: str
+    link: str
     submittedAt: datetime
     # When it was bytes, we had this error:
     # TypeError: Proposal fields cannot be resolved. Unexpected type '<class 'bytes'>'
