@@ -264,7 +264,16 @@ class VoteSubmitted(Event):
             update=update_proposal_vote,
         )
 
-        # TODO: add the proposalId to the member whenever we're indexing members
+        if self.vote:
+            update_member_vote = {"$push": {"yesVotes": self.proposalId}}
+        else:
+            update_member_vote = {"$push": {"noVotes": self.proposalId}}
+
+        await info.storage.find_one_and_update(
+            collection="members",
+            filter={"memberAddress": self.onBehalfAddress},
+            update=update_member_vote,
+        )
 
 
 @dataclass
