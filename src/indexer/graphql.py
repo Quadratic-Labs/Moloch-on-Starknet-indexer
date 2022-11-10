@@ -9,7 +9,7 @@ from pymongo import MongoClient
 from pymongo.database import Database
 from strawberry.aiohttp.views import GraphQLView
 
-from .models import ProposalStatusFront
+from .models import ProposalStatus
 from .utils import all_annotations
 
 logger = logging.getLogger(__name__)
@@ -90,22 +90,22 @@ class Proposal:
         )
 
     @strawberry.field
-    def statusFront(self) -> str:
+    def status(self) -> str:
         now = datetime.utcnow()
 
         if now < self.votingDurationEndingAt():
-            return ProposalStatusFront.VOTING_PERIOD.value
+            return ProposalStatus.VOTING_PERIOD.value
 
         if (
             self.currentMajority() >= self.majority
             and self.currentQuorum() >= self.quorum
         ):
             if now < self.gracePeriodEndingAt():
-                return ProposalStatusFront.GRACE_PERIOD.value
+                return ProposalStatus.GRACE_PERIOD.value
             else:
-                return ProposalStatusFront.APPROVED_READY.value
+                return ProposalStatus.APPROVED_READY.value
         else:
-            return ProposalStatusFront.REJECTED_READY.value
+            return ProposalStatus.REJECTED_READY.value
 
     @classmethod
     def from_mongo(cls, data: dict):

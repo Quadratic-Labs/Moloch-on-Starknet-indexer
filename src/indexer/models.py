@@ -1,7 +1,7 @@
 from enum import IntEnum, Enum
 
 
-class ProposalStatus(IntEnum):
+class ProposalRawStatus(IntEnum):
     SUBMITTED = 1
     ACCEPTED = 2
     # Can proceed to execution if any actions
@@ -18,7 +18,7 @@ class ProposalStatus(IntEnum):
     NOTFOUND = -1
 
 
-class ProposalStatusFront(Enum):
+class ProposalStatus(Enum):
     VOTING_PERIOD = "Voting Period"
     GRACE_PERIOD = "Grace Period"
     REJECTED_READY = "Rejected - Ready to Process"

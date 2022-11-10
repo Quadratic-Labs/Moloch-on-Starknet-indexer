@@ -12,7 +12,7 @@ from apibara.model import BlockHeader, StarkNetEvent
 
 from indexer.utils import get_block_datetime_utc
 from .deserializer import BlockNumber
-from .models import ProposalStatus
+from .models import ProposalRawStatus
 
 
 logger = logging.getLogger(__name__)
@@ -68,10 +68,10 @@ class ProposalAdded(Event):
     ):
         proposal_dict = {
             **asdict(self),
-            "status": ProposalStatus.SUBMITTED.value,
-            "statusHistory": [
+            "rawStatus": ProposalRawStatus.SUBMITTED.value,
+            "rawStatusHistory": [
                 (
-                    ProposalStatus.SUBMITTED.value,
+                    ProposalRawStatus.SUBMITTED.value,
                     get_block_datetime_utc(block),
                 )
             ],
@@ -149,7 +149,7 @@ class ProposalStatusUpdated(Event):
     ):
         await update_proposal(
             id=self.id,
-            document=asdict(self),
+            document={"rawStatus": self.status},
             info=info,
             block=block,
             starknet_event=starknet_event,
@@ -160,8 +160,8 @@ class ProposalStatusUpdated(Event):
             filter={"id": self.id},
             update={
                 "$push": {
-                    "statusHistory": (
-                        ProposalStatus(self.status).value,
+                    "rawStatusHistory": (
+                        ProposalRawStatus(self.status).value,
                         get_block_datetime_utc(block),
                     )
                 }

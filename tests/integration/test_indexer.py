@@ -8,7 +8,7 @@ from starknet_py.net.account.account_client import AccountClient
 from ..conftest import Account, IndexerProcessRunner
 from . import constants, test_events, utils
 from indexer.indexer import default_new_events_handler
-from indexer.models import ProposalStatus
+from indexer.models import ProposalRawStatus
 from indexer.utils import get_block_datetime_utc
 
 
@@ -62,9 +62,9 @@ async def test_proposal_added(
     assert proposal["type"] == "Signaling"
     assert proposal["submittedBy"] == utils.int_to_bytes(client.address)
     assert proposal["submittedAt"] == block_datetime
-    assert proposal["status"] == ProposalStatus.SUBMITTED.value
-    assert proposal["statusHistory"] == [
-        [ProposalStatus.SUBMITTED.value, block_datetime]
+    assert proposal["rawStatus"] == ProposalRawStatus.SUBMITTED.value
+    assert proposal["rawStatusHistory"] == [
+        [ProposalRawStatus.SUBMITTED.value, block_datetime]
     ]
 
 
@@ -141,10 +141,10 @@ async def test_onboard_added(
     assert proposal["shares"] == shares
     assert proposal["tributeAddress"] == utils.int_to_bytes(tribute_address)
     assert proposal["tributeOffered"] == tribute_offered
-    assert proposal["status"] == ProposalStatus.FORCED.value
-    assert proposal["statusHistory"] == [
-        [ProposalStatus.SUBMITTED.value, block_datetime],
-        [ProposalStatus.FORCED.value, block_datetime],
+    assert proposal["rawStatus"] == ProposalRawStatus.FORCED.value
+    assert proposal["rawStatusHistory"] == [
+        [ProposalRawStatus.SUBMITTED.value, block_datetime],
+        [ProposalRawStatus.FORCED.value, block_datetime],
     ]
 
 
@@ -273,15 +273,15 @@ async def test_vote_submitted(
     assert proposal["description"] == description
     assert proposal["type"] == "Signaling"
     assert proposal["submittedBy"] == utils.int_to_bytes(client.address)
-    assert proposal["status"] == ProposalStatus.SUBMITTED.value
+    assert proposal["rawStatus"] == ProposalRawStatus.SUBMITTED.value
     if vote:
         assert proposal["yesVotes"] == [utils.int_to_bytes(client.address)]
     else:
         assert proposal["noVotes"] == [utils.int_to_bytes(client.address)]
 
     assert proposal["submittedAt"] == proposal_block_datetime
-    assert proposal["statusHistory"] == [
-        [ProposalStatus.SUBMITTED.value, proposal_block_datetime]
+    assert proposal["rawStatusHistory"] == [
+        [ProposalRawStatus.SUBMITTED.value, proposal_block_datetime]
     ]
 
 
