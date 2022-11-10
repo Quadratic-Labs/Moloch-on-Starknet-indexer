@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from functools import wraps, lru_cache
 from typing import Callable, Iterable, Union
+from collections import ChainMap
 
 from cachetools import LRUCache, keys
 from starknet_py.contract import Contract
@@ -113,3 +114,11 @@ def function_accepts(func: Callable, argnames: Iterable) -> bool:
         bool: whether the function accepts the arguments or not
     """
     return all([argname in func.__code__.co_varnames for argname in argnames])
+
+
+def all_annotations(cls) -> ChainMap:
+    """Returns a dictionary-like ChainMap that includes annotations for all
+    attributes defined in cls or inherited from superclasses."""
+    return ChainMap(
+        *(c.__annotations__ for c in cls.__mro__ if "__annotations__" in c.__dict__)
+    )

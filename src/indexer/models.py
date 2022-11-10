@@ -1,4 +1,4 @@
-from enum import IntEnum
+from enum import IntEnum, Enum
 
 
 class ProposalStatus(IntEnum):
@@ -16,3 +16,12 @@ class ProposalStatus(IntEnum):
     FAILED = 6
     # Execution failed
     NOTFOUND = -1
+
+
+class ProposalStatusFront(Enum):
+    VOTING_PERIOD = "Voting Period"
+    GRACE_PERIOD = "Grace Period"
+    REJECTED_READY = "Rejected - Ready to Process"
+    APPROVED_READY = "Approved - Ready to Process"
+    REJECTED = "Rejected"
+    APPROVED = "Approved"

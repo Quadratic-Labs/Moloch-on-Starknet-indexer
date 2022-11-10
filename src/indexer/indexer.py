@@ -30,7 +30,10 @@ async def default_new_events_handler(
     for starknet_event in block_events.events:
         if event_class := event_classes.get(starknet_event.name):
             logger.debug(
-                "Handling block=%s, event=%s", block_events.block, starknet_event.name
+                "Handling event=%s emitted during block=%s with event_class=%s",
+                block_events.block,
+                starknet_event.name,
+                event_class,
             )
             kwargs = await deserialize_starknet_event(
                 fields=event_class.__annotations__,
@@ -44,7 +47,7 @@ async def default_new_events_handler(
                 info=info, block=block_events.block, starknet_event=starknet_event
             )
         else:
-            logger.error("Cannot find event handler for %s", starknet_event)
+            logger.error("Cannot find event class for %s", starknet_event)
 
 
 async def run_indexer(
