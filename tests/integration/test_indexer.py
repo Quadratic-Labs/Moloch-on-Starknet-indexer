@@ -275,9 +275,9 @@ async def test_vote_submitted(
     assert proposal["submittedBy"] == utils.int_to_bytes(client.address)
     assert proposal["rawStatus"] == ProposalRawStatus.SUBMITTED.value
     if vote:
-        assert proposal["yesVotes"] == [utils.int_to_bytes(client.address)]
+        assert proposal["yesVoters"] == [utils.int_to_bytes(client.address)]
     else:
-        assert proposal["noVotes"] == [utils.int_to_bytes(client.address)]
+        assert proposal["noVoters"] == [utils.int_to_bytes(client.address)]
 
     assert proposal["submittedAt"] == proposal_block_datetime
     assert proposal["rawStatusHistory"] == [

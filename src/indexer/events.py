@@ -256,9 +256,9 @@ class VoteSubmitted(Event):
         # TODO: store both calledAddress and onBehalfAddress, we'll need to know
         # who voted at some point
         if self.vote:
-            update_proposal_vote = {"$push": {"yesVotes": self.onBehalfAddress}}
+            update_proposal_vote = {"$push": {"yesVoters": self.onBehalfAddress}}
         else:
-            update_proposal_vote = {"$push": {"noVotes": self.onBehalfAddress}}
+            update_proposal_vote = {"$push": {"noVoters": self.onBehalfAddress}}
 
         await info.storage.find_one_and_update(
             collection="proposals",

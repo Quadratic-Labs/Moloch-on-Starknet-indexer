@@ -47,8 +47,8 @@ class Proposal:
     votingDuration: int
     graceDuration: int
 
-    yesVotes: list[HexValue] = strawberry.field(default_factory=list)
-    noVotes: list[HexValue] = strawberry.field(default_factory=list)
+    yesVoters: list[HexValue] = strawberry.field(default_factory=list)
+    noVoters: list[HexValue] = strawberry.field(default_factory=list)
 
     @strawberry.field
     def votingPeriodEndingAt(self) -> datetime:
@@ -84,11 +84,11 @@ class Proposal:
 
     @strawberry.field
     def yesVotesTotal(self) -> int:
-        return sum([member["shares"] for member in self.yesVotesMembers])
+        return sum([member["shares"] for member in self.yesVotersMembers])
 
     @strawberry.field
     def noVotesTotal(self) -> int:
-        return sum([member["shares"] for member in self.noVotesMembers])
+        return sum([member["shares"] for member in self.noVotersMembers])
 
     @strawberry.field
     def totalVotableShares(self, info) -> int:
@@ -175,7 +175,7 @@ class Proposal:
 
     @strawberry.field
     def didVote(self, memberAddress: HexValue) -> bool:
-        return memberAddress in self.yesVotes + self.noVotes
+        return memberAddress in self.yesVoters + self.noVoters
 
     @classmethod
     def from_mongo(cls, data: dict):
@@ -229,18 +229,18 @@ def get_proposals(info, limit: int = 10, skip: int = 0) -> List[Proposal]:
             "$lookup": {
                 "from": "members",
                 "pipeline": [{"$match": current_block_filter}],
-                "localField": "yesVotes",
+                "localField": "yesVoters",
                 "foreignField": "memberAddress",
-                "as": "yesVotesMembers",
+                "as": "yesVotersMembers",
             }
         },
         {
             "$lookup": {
                 "from": "members",
                 "pipeline": [{"$match": current_block_filter}],
-                "localField": "noVotes",
+                "localField": "noVoters",
                 "foreignField": "memberAddress",
-                "as": "noVotesMembers",
+                "as": "noVotersMembers",
             }
         },
         {"$sort": {"submittedAt": -1}},

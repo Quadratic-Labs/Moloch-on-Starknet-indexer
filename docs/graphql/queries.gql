@@ -77,8 +77,8 @@ query Page2 {
     quorum
     yesVoters
     noVoters
-    yesVotes
-    noVotes
+    yesVoters
+    noVoters
     currentMajority
     currentQuorum
     applicantAddress
