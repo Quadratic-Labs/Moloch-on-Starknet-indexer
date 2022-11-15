@@ -71,12 +71,17 @@ class Proposal:
     @strawberry.field
     def approvedAt(self) -> Optional[datetime]:
         if self.status() is ProposalStatus.APPROVED:
-            return self.submittedAt
+            return self._get_raw_status_time(ProposalRawStatus.ACCEPTED)
 
     @strawberry.field
     def rejectedAt(self) -> Optional[datetime]:
         if self.status() is ProposalStatus.REJECTED:
-            return self.submittedAt
+            return self._get_raw_status_time(ProposalRawStatus.REJECTED)
+
+    def _get_raw_status_time(self, status: ProposalRawStatus) -> Optional[datetime]:
+        for status_, time_ in self.rawStatusHistory:
+            if ProposalRawStatus(status_) is status:
+                return time_
 
     @strawberry.field
     def active(self) -> bool:
