@@ -113,7 +113,7 @@ class ProposalParamsUpdated(Event):
     async def handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
-        logger.debug("Inserting %s", self)
+        logger.debug("Inserting proposal_params %s", self)
         await info.storage.insert_one("proposal_params", asdict(self))
 
 
@@ -188,6 +188,7 @@ class GuildKickProposalAdded(Event):
 
 @dataclass
 class WhitelistProposalAdded(Event):
+    id: int
     tokenName: str
     tokenAddress: bytes
 
@@ -205,6 +206,7 @@ class WhitelistProposalAdded(Event):
 
 @dataclass
 class UnWhitelistProposalAdded(Event):
+    id: int
     tokenName: str
     tokenAddress: bytes
 

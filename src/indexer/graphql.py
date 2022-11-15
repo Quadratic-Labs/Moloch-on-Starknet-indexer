@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from datetime import datetime, timedelta
-from typing import Any, List, NewType, Type
+from typing import Any, List, NewType, Optional, Type
 
 import strawberry
 from aiohttp import web
@@ -9,7 +9,7 @@ from pymongo import MongoClient
 from pymongo.database import Database
 from strawberry.aiohttp.views import GraphQLView
 
-from .models import ProposalStatus
+from .models import ProposalRawStatus, ProposalStatus
 from .utils import all_annotations
 
 logger = logging.getLogger(__name__)
@@ -51,16 +51,36 @@ class Proposal:
     noVotes: list[HexValue] = strawberry.field(default_factory=list)
 
     @strawberry.field
-    def votingDurationEndingAt(self) -> datetime:
+    def votingPeriodEndingAt(self) -> datetime:
         return self.submittedAt + timedelta(minutes=self.votingDuration)
 
     @strawberry.field
     def gracePeriodEndingAt(self) -> datetime:
-        return self.votingDurationEndingAt() + timedelta(minutes=self.graceDuration)
+        return self.votingPeriodEndingAt() + timedelta(minutes=self.graceDuration)
+
+    @strawberry.field
+    def approvedToProcessAt(self) -> Optional[datetime]:
+        if self.status() is ProposalStatus.APPROVED_READY:
+            return self.gracePeriodEndingAt()
+
+    @strawberry.field
+    def rejectedToProcessAt(self) -> Optional[datetime]:
+        if self.status() is ProposalStatus.REJECTED_READY:
+            return self.votingPeriodEndingAt()
+
+    @strawberry.field
+    def approvedAt(self) -> Optional[datetime]:
+        if self.status() is ProposalStatus.APPROVED:
+            return self.submittedAt
+
+    @strawberry.field
+    def rejectedAt(self) -> Optional[datetime]:
+        if self.status() is ProposalStatus.REJECTED:
+            return self.submittedAt
 
     @strawberry.field
     def active(self) -> bool:
-        return True
+        return self.status().is_active
 
     @strawberry.field
     def yesVotesTotal(self) -> int:
@@ -81,35 +101,85 @@ class Proposal:
     @strawberry.field
     def currentMajority(self) -> float:
         # TODO: is this a fraction like 0.5 or an int from 0 to 100 ?
-        return self.yesVotesTotal() / (self.yesVotesTotal() + self.noVotesTotal())
+        total_votes = self.yesVotesTotal() + self.noVotesTotal()
+
+        if total_votes == 0:
+            return 0
+
+        return self.yesVotesTotal() / total_votes
 
     @strawberry.field
     def currentQuorum(self, info) -> float:
-        return (self.yesVotesTotal() + self.noVotesTotal()) / self.totalVotableShares(
-            info
-        )
+        total_votable_shares = self.totalVotableShares(info)
+
+        if total_votable_shares == 0:
+            return 0
+
+        return (self.yesVotesTotal() + self.noVotesTotal()) / total_votable_shares
 
     @strawberry.field
-    def status(self) -> str:
+    def timeRemaining(self) -> Optional[int]:
         now = datetime.utcnow()
 
-        if now < self.votingDurationEndingAt():
-            return ProposalStatus.VOTING_PERIOD.value
+        if self.status() == ProposalStatus.VOTING_PERIOD:
+            return int((now - self.votingPeriodEndingAt()).total_seconds())
+
+        if self.status() == ProposalStatus.GRACE_PERIOD:
+            return int((now - self.gracePeriodEndingAt()).total_seconds())
+
+    def _handle_forced_status(self) -> ProposalStatus:
+        now = datetime.utcnow()
+
+        # FORCED proposals bypasses voting period
+        # TODO: make sure this is the right logic for FORCED proposals
+        if now < self.submittedAt + timedelta(minutes=self.graceDuration):
+            return ProposalStatus.GRACE_PERIOD
+        else:
+            return ProposalStatus.APPROVED_READY
+
+    def _handle_submitted_status(self) -> ProposalStatus:
+        now = datetime.utcnow()
+
+        if now < self.votingPeriodEndingAt():
+            return ProposalStatus.VOTING_PERIOD
 
         if (
             self.currentMajority() >= self.majority
             and self.currentQuorum() >= self.quorum
         ):
             if now < self.gracePeriodEndingAt():
-                return ProposalStatus.GRACE_PERIOD.value
+                return ProposalStatus.GRACE_PERIOD
             else:
-                return ProposalStatus.APPROVED_READY.value
+                return ProposalStatus.APPROVED_READY
         else:
-            return ProposalStatus.REJECTED_READY.value
+            return ProposalStatus.REJECTED_READY
+
+    @strawberry.field
+    def status(self) -> ProposalStatus:
+        raw_status = ProposalRawStatus(self.rawStatus)
+
+        if raw_status is ProposalRawStatus.ACCEPTED:
+            return ProposalStatus.APPROVED
+
+        if raw_status is ProposalRawStatus.REJECTED:
+            return ProposalStatus.REJECTED
+
+        if raw_status is ProposalRawStatus.FORCED:
+            return self._handle_forced_status()
+
+        if raw_status is ProposalRawStatus.SUBMITTED:
+            return self._handle_submitted_status()
+
+        # return f"Not expected {raw_status.value}"
+        return ProposalStatus.UNKNOWN
+
+    @strawberry.field
+    def didVote(self, memberAddress: HexValue) -> bool:
+        return memberAddress in self.yesVotes + self.noVotes
 
     @classmethod
     def from_mongo(cls, data: dict):
-        logger.debug("Creating from mongo: %s", data)
+        logger.debug("Creating proposal from mongo: %s", data)
 
         fields = all_annotations(cls)
 
