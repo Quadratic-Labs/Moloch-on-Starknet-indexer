@@ -252,8 +252,47 @@ def get_proposals(info, limit: int = 10, skip: int = 0) -> List[Proposal]:
 
 
 @strawberry.type
+class Member:
+    memberAddress: HexValue
+    shares: int
+    loot: int
+    onboardedAt: datetime
+    yesVotes: list[HexValue] = strawberry.field(default_factory=list)
+    noVotes: list[HexValue] = strawberry.field(default_factory=list)
+
+    @classmethod
+    def from_mongo(cls, data: dict):
+        logger.debug("Creating member from mongo: %s", data)
+
+        fields = all_annotations(cls)
+
+        kwargs = {name: value for name, value in data.items() if name in fields}
+        non_kwargs = {name: value for name, value in data.items() if name not in fields}
+
+        logger.debug("Fields: %s", fields)
+        logger.debug("Creating with kwargs: %s, non_kwargs: %s", kwargs, non_kwargs)
+
+        member = cls(**kwargs)
+
+        member.__dict__.update(non_kwargs)
+
+        return member
+
+
+def get_members(info, limit: int = 10, skip: int = 0) -> List[Member]:
+    db: Database = info.context["db"]
+
+    current_block_filter = {"_chain.valid_to": None}
+
+    members = db["members"].find(current_block_filter)
+
+    return [Member.from_mongo(doc) for doc in members]
+
+
+@strawberry.type
 class Query:
     proposals: List[Proposal] = strawberry.field(resolver=get_proposals)
+    members: List[Member] = strawberry.field(resolver=get_members)
 
 
 class IndexerGraphQLView(GraphQLView):
