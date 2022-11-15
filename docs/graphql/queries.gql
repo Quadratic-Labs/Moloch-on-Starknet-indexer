@@ -55,8 +55,42 @@ query Proposals {
 
 # Page 2, Proposal Page ? There is no such page but shouldn't it exist ?
 query Page2 {
-  proposal(id: $id) {
+  proposal(id: $proposalId?) {
     id
+    status
+    active
+    type
+    title
+    link
+    timeRemaining
+    submittedAt
+    submittedBy
+    votingPeriodEndingAt
+    gracePeriodEndingAt
+    approvedToProcessAt
+    rejectedToProcessAt
+    approvedAt
+    rejectedAt
+    majority
+    canVote(memberAddress: $memberAddress?)
+    didVote(memberAddress: $memberAddress?)
+    quorum
+    yesVoters
+    noVoters
+    yesVotes
+    noVotes
+    currentMajority
+    currentQuorum
+    applicantAddress
+    shares
+    loots
+    tributeOffered
+    tributeAddress
+    tokenAddress
+    tokenName
+    memberAddress
+    paymentRequested
+    paymentAddress
   }
 }
 
