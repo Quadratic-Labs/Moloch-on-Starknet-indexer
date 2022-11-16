@@ -50,6 +50,12 @@ class Proposal:
     yesVoters: list[HexValue] = strawberry.field(default_factory=list)
     noVoters: list[HexValue] = strawberry.field(default_factory=list)
 
+    # private fields are not exposed to the GraphQL API
+    yesVotersMembers: strawberry.Private[list[dict]]
+    noVotersMembers: strawberry.Private[list[dict]]
+    rawStatus: strawberry.Private[ProposalRawStatus]
+    rawStatusHistory: strawberry.Private[list[tuple[datetime, ProposalRawStatus]]]
+
     @strawberry.field
     def votingPeriodEndingAt(self) -> datetime:
         return self.submittedAt + timedelta(minutes=self.votingDuration)
@@ -132,16 +138,6 @@ class Proposal:
         if self.status() == ProposalStatus.GRACE_PERIOD:
             return int((now - self.gracePeriodEndingAt()).total_seconds())
 
-    def _handle_forced_status(self) -> ProposalStatus:
-        now = datetime.utcnow()
-
-        # FORCED proposals bypasses voting period
-        # TODO: make sure this is the right logic for FORCED proposals
-        if now < self.submittedAt + timedelta(minutes=self.graceDuration):
-            return ProposalStatus.GRACE_PERIOD
-        else:
-            return ProposalStatus.APPROVED_READY
-
     def _handle_submitted_status(self) -> ProposalStatus:
         now = datetime.utcnow()
 
@@ -169,13 +165,9 @@ class Proposal:
         if raw_status is ProposalRawStatus.REJECTED:
             return ProposalStatus.REJECTED
 
-        if raw_status is ProposalRawStatus.FORCED:
-            return self._handle_forced_status()
-
         if raw_status is ProposalRawStatus.SUBMITTED:
             return self._handle_submitted_status()
 
-        # return f"Not expected {raw_status.value}"
         return ProposalStatus.UNKNOWN
 
     @strawberry.field
