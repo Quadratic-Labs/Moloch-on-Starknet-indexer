@@ -84,6 +84,10 @@ class Proposal:
         if self.status() is ProposalStatus.REJECTED:
             return self._get_raw_status_time(ProposalRawStatus.REJECTED)
 
+    @strawberry.field
+    def processedAt(self) -> Optional[datetime]:
+        return self.approvedAt() or self.rejectedAt() or None
+
     def _get_raw_status_time(self, status: ProposalRawStatus) -> Optional[datetime]:
         for status_, time_ in self.rawStatusHistory:
             if ProposalRawStatus(status_) is status:
@@ -171,8 +175,12 @@ class Proposal:
         return ProposalStatus.UNKNOWN
 
     @strawberry.field
-    def didVote(self, memberAddress: HexValue) -> bool:
+    def memberDidVote(self, memberAddress: HexValue) -> bool:
         return memberAddress in self.yesVoters + self.noVoters
+
+    @strawberry.field
+    def memberCanVote(self, memberAddress: HexValue) -> bool:
+        return True
 
     @classmethod
     def from_mongo(cls, data: dict):
@@ -218,6 +226,9 @@ def get_proposals(info, limit: int = 10, skip: int = 0) -> List[Proposal]:
 
     current_block_filter = {"_chain.valid_to": None}
 
+    # TODO: use $set with MongoDB Expressions[1] to add fields we need for sorting
+    # like timeRemaining and processedAt
+    # [1]: https://www.mongodb.com/docs/manual/meta/aggregation-quick-reference/#std-label-aggregation-expressions
     pipeline: list[dict[str, Any]] = [
         {"$match": current_block_filter},
         {"$skip": skip},
