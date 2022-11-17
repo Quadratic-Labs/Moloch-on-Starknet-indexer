@@ -223,6 +223,7 @@ def run_indexer_process(
 
 @pytest.fixture(scope="session")
 def mongo_client(docker_compose_services) -> pymongo.MongoClient:
+    # TODO: explore https://github.com/mongomock/mongomock
     return pymongo.MongoClient(config.MONGO_URL, tz_aware=True)
 
 

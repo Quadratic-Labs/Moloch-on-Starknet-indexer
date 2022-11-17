@@ -10,7 +10,7 @@ from pymongo.database import Database
 from strawberry.aiohttp.views import GraphQLView
 
 from .models import ProposalRawStatus, ProposalStatus
-from .utils import all_annotations
+from . import utils
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -53,8 +53,8 @@ class Proposal:
     # private fields are not exposed to the GraphQL API
     yesVotersMembers: strawberry.Private[list[dict]]
     noVotersMembers: strawberry.Private[list[dict]]
-    rawStatus: strawberry.Private[ProposalRawStatus]
-    rawStatusHistory: strawberry.Private[list[tuple[datetime, ProposalRawStatus]]]
+    rawStatus: strawberry.Private[int]
+    rawStatusHistory: strawberry.Private[list[tuple[datetime, int]]]
 
     @strawberry.field
     def votingPeriodEndingAt(self) -> datetime:
@@ -134,7 +134,7 @@ class Proposal:
 
     @strawberry.field
     def timeRemaining(self) -> Optional[int]:
-        now = datetime.utcnow()
+        now = utils.utcnow()
 
         if self.status() == ProposalStatus.VOTING_PERIOD:
             return int((now - self.votingPeriodEndingAt()).total_seconds())
@@ -143,7 +143,7 @@ class Proposal:
             return int((now - self.gracePeriodEndingAt()).total_seconds())
 
     def _handle_submitted_status(self) -> ProposalStatus:
-        now = datetime.utcnow()
+        now = utils.utcnow()
 
         if now < self.votingPeriodEndingAt():
             return ProposalStatus.VOTING_PERIOD
@@ -186,7 +186,7 @@ class Proposal:
     def from_mongo(cls, data: dict):
         logger.debug("Creating proposal from mongo: %s", data)
 
-        fields = all_annotations(cls)
+        fields = utils.all_annotations(cls)
 
         kwargs = {name: value for name, value in data.items() if name in fields}
         non_kwargs = {name: value for name, value in data.items() if name not in fields}

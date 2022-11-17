@@ -122,3 +122,10 @@ def all_annotations(cls) -> ChainMap:
     return ChainMap(
         *(c.__annotations__ for c in cls.__mro__ if "__annotations__" in c.__dict__)
     )
+
+
+def utcnow() -> datetime:
+    """Wrapper for datetime.utcnow, it should be used instead of datetime.utcnow
+    Tests should mock it to tests functions that uses current time
+    """
+    return datetime.utcnow()
