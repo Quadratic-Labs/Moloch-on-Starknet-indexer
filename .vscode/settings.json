@@ -1,7 +1,10 @@
 {
     "python.testing.pytestArgs": [
         "tests",
-        "--keep-docker-services"
+        "--keep-docker-services",
+        "--cov=src",
+        "--cov-report=html",
+        "--cov-report=term"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
