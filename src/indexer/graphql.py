@@ -54,7 +54,7 @@ class Proposal:
     yesVotersMembers: strawberry.Private[list[dict]]
     noVotersMembers: strawberry.Private[list[dict]]
     rawStatus: strawberry.Private[int]
-    rawStatusHistory: strawberry.Private[list[tuple[datetime, int]]]
+    rawStatusHistory: strawberry.Private[list[tuple[int, datetime]]]
 
     @strawberry.field
     def votingPeriodEndingAt(self) -> datetime:
