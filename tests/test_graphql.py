@@ -7,7 +7,7 @@ from indexer import utils
 from pytest import MonkeyPatch
 
 
-def test_proposal_all(monkeypatch: MonkeyPatch):
+def test_proposal_basic():
     id_ = 1
     title = "Test Proposal"
     type_ = "TestType"
@@ -44,9 +44,6 @@ def test_proposal_all(monkeypatch: MonkeyPatch):
         rawStatusHistory=rawStatusHistory,
     )
 
-    votingPeriodEndingAt = submittedAt + timedelta(minutes=votingDuration)
-    gracePeriodEndingAt = votingPeriodEndingAt + timedelta(minutes=graceDuration)
-
     assert proposal.id == id_
     assert proposal.title == title
     assert proposal.type == type_
@@ -64,14 +61,21 @@ def test_proposal_all(monkeypatch: MonkeyPatch):
     assert proposal.rawStatus == rawStatus
     assert proposal.rawStatusHistory == rawStatusHistory
 
-    assert proposal.currentMajority() == 0
-    assert proposal.yesVotesTotal() == 0
-    assert proposal.noVotesTotal() == 0
+    return proposal
+
+
+def test_proposal_status(monkeypatch: MonkeyPatch):
+    proposal = test_proposal_basic()
+
+    votingPeriodEndingAt = proposal.submittedAt + timedelta(
+        minutes=proposal.votingDuration
+    )
+    gracePeriodEndingAt = votingPeriodEndingAt + timedelta(
+        minutes=proposal.graceDuration
+    )
+
     assert proposal.votingPeriodEndingAt() == votingPeriodEndingAt
     assert proposal.gracePeriodEndingAt() == gracePeriodEndingAt
-    # need info param and database (or mock) to get members
-    # assert proposal.currentQuorum() == 0
-    # assert proposal.totalVotableShares() == 0
 
     assert proposal.approvedAt() == None
     assert proposal.rejectedAt() == None
@@ -97,8 +101,8 @@ def test_proposal_all(monkeypatch: MonkeyPatch):
 
     # When the majority and quorum conditions are met, the proposal should be
     # in grace period until the current time is gracePeriodEndingAt
-    proposal.currentMajority = lambda: majority
-    proposal.currentQuorum = lambda: quorum
+    proposal.currentMajority = lambda: proposal.majority
+    proposal.currentQuorum = lambda: proposal.quorum
     assert proposal.status() == ProposalStatus.GRACE_PERIOD
     assert proposal.active() == True
     now = utils.utcnow()
@@ -133,8 +137,14 @@ def test_proposal_all(monkeypatch: MonkeyPatch):
     assert proposal.processedAt() == rejectedAt
     assert proposal.timeRemaining() == None
 
+    proposal.rawStatus = ProposalRawStatus.FORCED.value
+    proposal.status() == ProposalStatus.UNKNOWN
+
+
+def test_proposal_member_did_vote():
+    proposal = test_proposal_basic()
+
     memberAddress = "0x0"
-    assert proposal.memberCanVote(memberAddress) == True
     assert proposal.memberDidVote(memberAddress) == False
 
     proposal.noVoters = []
@@ -145,5 +155,20 @@ def test_proposal_all(monkeypatch: MonkeyPatch):
     proposal.noVoters.append(memberAddress)
     assert proposal.memberDidVote(memberAddress) == True
 
-    proposal.rawStatus = ProposalRawStatus.FORCED.value
-    proposal.status() == ProposalStatus.UNKNOWN
+
+def test_proposal_memeber_did_vote():
+    proposal = test_proposal_basic()
+
+    memberAddress = "0x0"
+    assert proposal.memberCanVote(memberAddress) == True
+
+
+def test_proposal_majority_quorum():
+    proposal = test_proposal_basic()
+
+    assert proposal.currentMajority() == 0
+    assert proposal.yesVotesTotal() == 0
+    assert proposal.noVotesTotal() == 0
+    # need info param and database (or mock) to get members
+    # assert proposal.currentQuorum() == 0
+    # assert proposal.totalVotableShares() == 0
