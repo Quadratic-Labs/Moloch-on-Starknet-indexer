@@ -194,7 +194,7 @@ class Proposal:
         non_kwargs = {name: value for name, value in data.items() if name not in fields}
 
         logger.debug("Fields: %s", fields)
-        logger.debug("Creating with kwargs: %s, non_kwargs: %s", kwargs, non_kwargs)
+        logger.debug("Creating %s with kwargs: %s, non_kwargs: %s", cls.__name__, kwargs, non_kwargs)
 
         proposal = cls(**kwargs)
 

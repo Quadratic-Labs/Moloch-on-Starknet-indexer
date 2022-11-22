@@ -234,3 +234,165 @@ async def test_vote(
     assert python_data.onBehalfAddress == client.address
 
     return proposal_transaction_receipt, transaction_receipt
+
+
+async def test_guild_kick(
+    contract: Contract,
+    contract_events: dict,
+    client: AccountClient,
+    title="GuildKick event",
+    link="GuildKick event link",
+    memberAddress=constants.ACCOUNT_ADDRESS,
+):
+    invoke_result = await contract.functions["submitGuildKick"].invoke(
+        title=utils.str_to_felt(title),
+        link=utils.str_to_felt(link),
+        memberAddress=memberAddress,
+        max_fee=10**16,
+    )
+    await invoke_result.wait_for_acceptance()
+
+    transaction_hash = invoke_result.hash
+    transaction_receipt = await client.get_transaction_receipt(transaction_hash)
+
+    # Takes events emitted by our contract from transaction receipt
+    events = [
+        event
+        for event in transaction_receipt.events
+        if event.from_address == contract.address
+    ]
+
+    # Both ProposalAdded and OnboardProposalAdded events should be emitted
+    # assert len(events) == 2
+
+    # Takes an abi of the event which data we want to serialize
+    # We can get it from the contract abi
+    event_abi = contract_events["GuildKickProposalAdded"]
+
+    # The first event is ProposalAdded, the second is SwapProposalAdded
+    event_data = events[1].data
+
+    # Creates CairoSerializer with contract's identifier manager
+    cairo_serializer = CairoSerializer(
+        identifier_manager=contract.data.identifier_manager
+    )
+
+    # Transforms cairo data to python (needs types of the values and values)
+    python_data = cairo_serializer.to_python(
+        value_types=event_abi["data"], values=event_data
+    )
+
+    assert python_data.id == 0
+    assert python_data.memberAddress == memberAddress
+
+    return transaction_receipt
+
+
+async def test_whitelist(
+    contract: Contract,
+    contract_events: dict,
+    client: AccountClient,
+    title="Whitelist event",
+    link="Whitelist event link",
+    tokenName="Some Token",
+    tokenAddress=constants.ACCOUNT_ADDRESS,
+):
+    invoke_result = await contract.functions["submitApproveToken"].invoke(
+        title=utils.str_to_felt(title),
+        link=utils.str_to_felt(link),
+        tokenName=utils.str_to_felt(tokenName),
+        tokenAddress=tokenAddress,
+        max_fee=10**16,
+    )
+    await invoke_result.wait_for_acceptance()
+
+    transaction_hash = invoke_result.hash
+    transaction_receipt = await client.get_transaction_receipt(transaction_hash)
+
+    # Takes events emitted by our contract from transaction receipt
+    events = [
+        event
+        for event in transaction_receipt.events
+        if event.from_address == contract.address
+    ]
+
+    # Both ProposalAdded and OnboardProposalAdded events should be emitted
+    # assert len(events) == 2
+
+    # Takes an abi of the event which data we want to serialize
+    # We can get it from the contract abi
+    event_abi = contract_events["WhitelistProposalAdded"]
+
+    # The first event is ProposalAdded, the second is SwapProposalAdded
+    event_data = events[1].data
+
+    # Creates CairoSerializer with contract's identifier manager
+    cairo_serializer = CairoSerializer(
+        identifier_manager=contract.data.identifier_manager
+    )
+
+    # Transforms cairo data to python (needs types of the values and values)
+    python_data = cairo_serializer.to_python(
+        value_types=event_abi["data"], values=event_data
+    )
+
+    assert python_data.id == 0
+    assert python_data.tokenName == utils.str_to_felt(tokenName)
+    assert python_data.tokenAddress == tokenAddress
+
+    return transaction_receipt
+
+
+async def test_unwhitelist(
+    contract: Contract,
+    contract_events: dict,
+    client: AccountClient,
+    title="UnWhitelist event",
+    link="Whitelist event link",
+    tokenName="Some Token",
+    tokenAddress=constants.ACCOUNT_ADDRESS,
+):
+    invoke_result = await contract.functions["submitApproveToken"].invoke(
+        title=utils.str_to_felt(title),
+        link=utils.str_to_felt(link),
+        tokenName=utils.str_to_felt(tokenName),
+        tokenAddress=tokenAddress,
+        max_fee=10**16,
+    )
+    await invoke_result.wait_for_acceptance()
+
+    transaction_hash = invoke_result.hash
+    transaction_receipt = await client.get_transaction_receipt(transaction_hash)
+
+    # Takes events emitted by our contract from transaction receipt
+    events = [
+        event
+        for event in transaction_receipt.events
+        if event.from_address == contract.address
+    ]
+
+    # Both ProposalAdded and OnboardProposalAdded events should be emitted
+    # assert len(events) == 2
+
+    # Takes an abi of the event which data we want to serialize
+    # We can get it from the contract abi
+    event_abi = contract_events["UnWhitelistProposalAdded"]
+
+    # The first event is ProposalAdded, the second is SwapProposalAdded
+    event_data = events[1].data
+
+    # Creates CairoSerializer with contract's identifier manager
+    cairo_serializer = CairoSerializer(
+        identifier_manager=contract.data.identifier_manager
+    )
+
+    # Transforms cairo data to python (needs types of the values and values)
+    python_data = cairo_serializer.to_python(
+        value_types=event_abi["data"], values=event_data
+    )
+
+    assert python_data.id == 0
+    assert python_data.tokenName == utils.str_to_felt(tokenName)
+    assert python_data.tokenAddress == tokenAddress
+
+    return transaction_receipt
