@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from indexer.graphql import Proposal
 from indexer.models import ProposalStatus, ProposalRawStatus
-from indexer import utils
+from indexer import utils, storage
 
 from pytest import MonkeyPatch
 
@@ -163,12 +163,48 @@ def test_proposal_memeber_did_vote():
     assert proposal.memberCanVote(memberAddress) == True
 
 
-def test_proposal_majority_quorum():
+def test_proposal_majority_quorum(monkeypatch: MonkeyPatch):
     proposal = test_proposal_basic()
 
+    info = None
+
+    monkeypatch.setattr(storage, "list_members", lambda info: [])
+
     assert proposal.currentMajority() == 0
+    assert proposal.currentQuorum(info) == 0
     assert proposal.yesVotesTotal() == 0
     assert proposal.noVotesTotal() == 0
-    # need info param and database (or mock) to get members
-    # assert proposal.currentQuorum() == 0
-    # assert proposal.totalVotableShares() == 0
+
+    now = utils.utcnow()
+
+    yesVotersMembers = [
+        {"memberAddress": "0x0", "shares": 10, "loot": 0, "onboardedAt": now},
+        {"memberAddress": "0x1", "shares": 3, "loot": 0, "onboardedAt": now},
+        {"memberAddress": "0x2", "shares": 1, "loot": 0, "onboardedAt": now},
+        {"memberAddress": "0x3", "shares": 1, "loot": 0, "onboardedAt": now},
+    ]
+    noVotersMembers = [
+        {"memberAddress": "0x10", "shares": 2, "loot": 0, "onboardedAt": now},
+        {"memberAddress": "0x20", "shares": 1, "loot": 0, "onboardedAt": now},
+        {"memberAddress": "0x30", "shares": 2, "loot": 0, "onboardedAt": now},
+    ]
+
+    otherMembers = [
+        {"memberAddress": "0x100", "shares": 4, "loot": 0, "onboardedAt": now},
+        {"memberAddress": "0x200", "shares": 1, "loot": 0, "onboardedAt": now},
+    ]
+
+    members = yesVotersMembers + noVotersMembers + otherMembers
+
+    monkeypatch.setattr(storage, "list_members", lambda info: members)
+
+    proposal.yesVoters = [member["memberAddress"] for member in yesVotersMembers]
+
+    proposal.yesVotersMembers = yesVotersMembers
+
+    proposal.noVoters = [member["memberAddress"] for member in noVotersMembers]
+    proposal.noVotersMembers = noVotersMembers
+
+    assert proposal.currentQuorum(info) == 80
+    assert proposal.totalVotableShares(info) == 25
+    assert proposal.currentMajority() == 75

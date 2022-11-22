@@ -10,7 +10,7 @@ from pymongo.database import Database
 from strawberry.aiohttp.views import GraphQLView
 
 from .models import ProposalRawStatus, ProposalStatus
-from . import utils
+from . import utils, storage
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -107,21 +107,19 @@ class Proposal:
 
     @strawberry.field
     def totalVotableShares(self, info) -> int:
-        db: Database = info.context["db"]
-        # TODO: Filter only users who could have voted for this particular proposal
-        # TODO: Use dataloaders or any other mechanism for caching
-        members = db["members"].find({"_chain.valid_to": None})
+        members = storage.list_members(info)
         return sum([member["shares"] for member in members])
 
     @strawberry.field
     def currentMajority(self) -> float:
-        # TODO: is this a fraction like 0.5 or an int from 0 to 100 ?
         total_votes = self.yesVotesTotal() + self.noVotesTotal()
 
         if total_votes == 0:
             return 0
 
-        return self.yesVotesTotal() / total_votes
+        majority_fraction = self.yesVotesTotal() / total_votes
+
+        return round(majority_fraction * 100, 2)
 
     @strawberry.field
     def currentQuorum(self, info) -> float:
@@ -130,7 +128,11 @@ class Proposal:
         if total_votable_shares == 0:
             return 0
 
-        return (self.yesVotesTotal() + self.noVotesTotal()) / total_votable_shares
+        quroum_fraction = (
+            self.yesVotesTotal() + self.noVotesTotal()
+        ) / total_votable_shares
+
+        return round(quroum_fraction * 100, 2)
 
     @strawberry.field
     def timeRemaining(self) -> Optional[int]:
@@ -272,7 +274,7 @@ class Member:
     def from_mongo(cls, data: dict):
         logger.debug("Creating member from mongo: %s", data)
 
-        fields = all_annotations(cls)
+        fields = utils.all_annotations(cls)
 
         kwargs = {name: value for name, value in data.items() if name in fields}
         non_kwargs = {name: value for name, value in data.items() if name not in fields}
