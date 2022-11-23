@@ -350,9 +350,9 @@ async def test_unwhitelist(
     title="UnWhitelist event",
     link="Whitelist event link",
     tokenName="Some Token",
-    tokenAddress=constants.ACCOUNT_ADDRESS,
+    tokenAddress=constants.FEE_TOKEN_ADDRESS,
 ):
-    invoke_result = await contract.functions["submitApproveToken"].invoke(
+    invoke_result = await contract.functions["submitRemoveToken"].invoke(
         title=utils.str_to_felt(title),
         link=utils.str_to_felt(link),
         tokenName=utils.str_to_felt(tokenName),

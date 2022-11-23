@@ -301,6 +301,9 @@ ALL_EVENTS: dict[str, Type[Event]] = {
     "ProposalStatusUpdated": ProposalStatusUpdated,
     "ProposalParamsUpdated": ProposalParamsUpdated,
     "SwapProposalAdded": SwapProposalAdded,
+    "GuildKickProposalAdded": GuildKickProposalAdded,
+    "WhitelistProposalAdded": WhitelistProposalAdded,
+    "UnWhitelistProposalAdded": UnWhitelistProposalAdded,
     "VoteSubmitted": VoteSubmitted,
     "MemberAdded": MemberAdded,
 }
