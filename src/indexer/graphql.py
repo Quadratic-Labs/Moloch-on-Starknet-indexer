@@ -8,6 +8,7 @@ from aiohttp import web
 from pymongo import MongoClient
 from pymongo.database import Database
 from strawberry.aiohttp.views import GraphQLView
+from strawberry.types import Info
 
 from .models import ProposalRawStatus, ProposalStatus
 from . import utils, storage
@@ -65,28 +66,28 @@ class Proposal:
         return self.votingPeriodEndingAt() + timedelta(minutes=self.graceDuration)
 
     @strawberry.field
-    def approvedToProcessAt(self) -> Optional[datetime]:
-        if self.status() is ProposalStatus.APPROVED_READY:
+    def approvedToProcessAt(self, info: Info) -> Optional[datetime]:
+        if self.status(info) is ProposalStatus.APPROVED_READY:
             return self.gracePeriodEndingAt()
 
     @strawberry.field
-    def rejectedToProcessAt(self) -> Optional[datetime]:
-        if self.status() is ProposalStatus.REJECTED_READY:
+    def rejectedToProcessAt(self, info: Info) -> Optional[datetime]:
+        if self.status(info) is ProposalStatus.REJECTED_READY:
             return self.votingPeriodEndingAt()
 
     @strawberry.field
-    def approvedAt(self) -> Optional[datetime]:
-        if self.status() is ProposalStatus.APPROVED:
+    def approvedAt(self, info: Info) -> Optional[datetime]:
+        if self.status(info) is ProposalStatus.APPROVED:
             return self._get_raw_status_time(ProposalRawStatus.ACCEPTED)
 
     @strawberry.field
-    def rejectedAt(self) -> Optional[datetime]:
-        if self.status() is ProposalStatus.REJECTED:
+    def rejectedAt(self, info: Info) -> Optional[datetime]:
+        if self.status(info) is ProposalStatus.REJECTED:
             return self._get_raw_status_time(ProposalRawStatus.REJECTED)
 
     @strawberry.field
-    def processedAt(self) -> Optional[datetime]:
-        return self.approvedAt() or self.rejectedAt() or None
+    def processedAt(self, info: Info) -> Optional[datetime]:
+        return self.approvedAt(info) or self.rejectedAt(info) or None
 
     def _get_raw_status_time(self, status: ProposalRawStatus) -> Optional[datetime]:
         for status_, time_ in self.rawStatusHistory:
@@ -94,8 +95,8 @@ class Proposal:
                 return time_
 
     @strawberry.field
-    def active(self) -> bool:
-        return self.status().is_active
+    def active(self, info: Info) -> bool:
+        return self.status(info).is_active
 
     @strawberry.field
     def yesVotesTotal(self) -> int:
@@ -122,7 +123,7 @@ class Proposal:
         return round(majority_fraction * 100, 2)
 
     @strawberry.field
-    def currentQuorum(self, info) -> float:
+    def currentQuorum(self, info: Info) -> float:
         total_votable_shares = self.totalVotableShares(info)
 
         if total_votable_shares == 0:
@@ -135,16 +136,16 @@ class Proposal:
         return round(quroum_fraction * 100, 2)
 
     @strawberry.field
-    def timeRemaining(self) -> Optional[int]:
+    def timeRemaining(self, info: Info) -> Optional[int]:
         now = utils.utcnow()
 
-        if self.status() == ProposalStatus.VOTING_PERIOD:
+        if self.status(info) == ProposalStatus.VOTING_PERIOD:
             return int((now - self.votingPeriodEndingAt()).total_seconds())
 
-        if self.status() == ProposalStatus.GRACE_PERIOD:
+        if self.status(info) == ProposalStatus.GRACE_PERIOD:
             return int((now - self.gracePeriodEndingAt()).total_seconds())
 
-    def _handle_submitted_status(self) -> ProposalStatus:
+    def _handle_submitted_status(self, info: Info) -> ProposalStatus:
         now = utils.utcnow()
 
         if now < self.votingPeriodEndingAt():
@@ -152,7 +153,7 @@ class Proposal:
 
         if (
             self.currentMajority() >= self.majority
-            and self.currentQuorum() >= self.quorum
+            and self.currentQuorum(info) >= self.quorum
         ):
             if now < self.gracePeriodEndingAt():
                 return ProposalStatus.GRACE_PERIOD
@@ -162,7 +163,7 @@ class Proposal:
             return ProposalStatus.REJECTED_READY
 
     @strawberry.field
-    def status(self) -> ProposalStatus:
+    def status(self, info: Info) -> ProposalStatus:
         raw_status = ProposalRawStatus(self.rawStatus)
 
         if raw_status is ProposalRawStatus.ACCEPTED:
@@ -172,7 +173,7 @@ class Proposal:
             return ProposalStatus.REJECTED
 
         if raw_status is ProposalRawStatus.SUBMITTED:
-            return self._handle_submitted_status()
+            return self._handle_submitted_status(info)
 
         return ProposalStatus.UNKNOWN
 
@@ -194,7 +195,12 @@ class Proposal:
         non_kwargs = {name: value for name, value in data.items() if name not in fields}
 
         logger.debug("Fields: %s", fields)
-        logger.debug("Creating %s with kwargs: %s, non_kwargs: %s", cls.__name__, kwargs, non_kwargs)
+        logger.debug(
+            "Creating %s with kwargs: %s, non_kwargs: %s",
+            cls.__name__,
+            kwargs,
+            non_kwargs,
+        )
 
         proposal = cls(**kwargs)
 
@@ -223,7 +229,7 @@ PROPOSAL_TYPE_TO_CLASS: dict[str, Type[Proposal]] = {
 }
 
 
-def get_proposals(info, limit: int = 10, skip: int = 0) -> List[Proposal]:
+def get_proposals(info: Info, limit: int = 10, skip: int = 0) -> List[Proposal]:
     db: Database = info.context["db"]
 
     current_block_filter = {"_chain.valid_to": None}
@@ -289,7 +295,7 @@ class Member:
         return member
 
 
-def get_members(info, limit: int = 10, skip: int = 0) -> List[Member]:
+def get_members(info: Info, limit: int = 10, skip: int = 0) -> List[Member]:
     db: Database = info.context["db"]
 
     current_block_filter = {"_chain.valid_to": None}

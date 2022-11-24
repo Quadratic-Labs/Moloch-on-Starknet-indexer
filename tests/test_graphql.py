@@ -74,71 +74,77 @@ def test_proposal_status(monkeypatch: MonkeyPatch):
         minutes=proposal.graceDuration
     )
 
+    info = None
+
     assert proposal.votingPeriodEndingAt() == votingPeriodEndingAt
     assert proposal.gracePeriodEndingAt() == gracePeriodEndingAt
 
-    assert proposal.approvedAt() == None
-    assert proposal.rejectedAt() == None
-    assert proposal.approvedToProcessAt() == None
-    assert proposal.rejectedToProcessAt() == None
+    assert proposal.approvedAt(info) == None
+    assert proposal.rejectedAt(info) == None
+    assert proposal.approvedToProcessAt(info) == None
+    assert proposal.rejectedToProcessAt(info) == None
 
     assert proposal._get_raw_status_time(ProposalRawStatus.FORCED) == None
 
     # Proposal is at voting period since voting duration hasn't ended yet
-    assert proposal.status() == ProposalStatus.VOTING_PERIOD
-    assert proposal.active() == True
+    assert proposal.status(info) == ProposalStatus.VOTING_PERIOD
+    assert proposal.active(info) == True
     now = utils.utcnow()
     monkeypatch.setattr(utils, "utcnow", lambda: now)
-    assert proposal.timeRemaining() == int((now - votingPeriodEndingAt).total_seconds())
+    assert proposal.timeRemaining(info) == int(
+        (now - votingPeriodEndingAt).total_seconds()
+    )
 
     # After the voting period, the proposal should be rejected ready to process
     # since the quorum and majority conditions aren't met
     monkeypatch.setattr(utils, "utcnow", lambda: votingPeriodEndingAt)
-    assert proposal.status() == ProposalStatus.REJECTED_READY
-    assert proposal.active() == True
-    assert proposal.rejectedToProcessAt() == votingPeriodEndingAt
-    assert proposal.timeRemaining() == None
+    assert proposal.status(info) == ProposalStatus.REJECTED_READY
+    assert proposal.active(info) == True
+    assert proposal.rejectedToProcessAt(info) == votingPeriodEndingAt
+    assert proposal.timeRemaining(info) == None
 
     # When the majority and quorum conditions are met, the proposal should be
     # in grace period until the current time is gracePeriodEndingAt
     proposal.currentMajority = lambda: proposal.majority
-    proposal.currentQuorum = lambda: proposal.quorum
-    assert proposal.status() == ProposalStatus.GRACE_PERIOD
-    assert proposal.active() == True
+    proposal.currentQuorum = lambda info: proposal.quorum
+    assert proposal.status(info) == ProposalStatus.GRACE_PERIOD
+    assert proposal.active(info) == True
     now = utils.utcnow()
     monkeypatch.setattr(utils, "utcnow", lambda: now)
-    assert proposal.timeRemaining() == int((now - gracePeriodEndingAt).total_seconds())
+    assert proposal.timeRemaining(info) == int(
+        (now - gracePeriodEndingAt).total_seconds()
+    )
 
     # After the grace period, the proposal should be approved ready to process
     # since the quorum and majority conditions are met
     monkeypatch.setattr(utils, "utcnow", lambda: gracePeriodEndingAt)
-    assert proposal.status() == ProposalStatus.APPROVED_READY
-    assert proposal.active() == True
-    assert proposal.approvedToProcessAt() == gracePeriodEndingAt
-    assert proposal.timeRemaining() == None
+    assert proposal.status(info) == ProposalStatus.APPROVED_READY
+    assert proposal.active(info) == True
+    assert proposal.approvedToProcessAt(info) == gracePeriodEndingAt
+    assert proposal.timeRemaining(info) == None
 
     # simulate ProposalStatusUpdated with status=ACCEPTED
     proposal.rawStatus = ProposalRawStatus.ACCEPTED.value
     approvedAt = utils.utcnow()
     proposal.rawStatusHistory.append((ProposalRawStatus.ACCEPTED.value, approvedAt))
-    assert proposal.status() == ProposalStatus.APPROVED
-    assert proposal.active() == False
-    assert proposal.approvedAt() == approvedAt
-    assert proposal.processedAt() == approvedAt
-    assert proposal.timeRemaining() == None
+    assert proposal.status(info) == ProposalStatus.APPROVED
+    assert proposal.active(info) == False
+    assert proposal.approvedAt(info) == approvedAt
+    assert proposal.processedAt(info) == approvedAt
+    assert proposal.timeRemaining(info) == None
 
     # simulate ProposalStatusUpdated with status=REJECTED
     proposal.rawStatus = ProposalRawStatus.REJECTED.value
     rejectedAt = utils.utcnow()
     proposal.rawStatusHistory.append((ProposalRawStatus.REJECTED.value, rejectedAt))
-    assert proposal.status() == ProposalStatus.REJECTED
-    assert proposal.active() == False
-    assert proposal.rejectedAt() == rejectedAt
-    assert proposal.processedAt() == rejectedAt
-    assert proposal.timeRemaining() == None
+    assert proposal.status(info) == ProposalStatus.REJECTED
+    assert proposal.active(info) == False
+    assert proposal.rejectedAt(info) == rejectedAt
+    assert proposal.processedAt(info) == rejectedAt
+    assert proposal.timeRemaining(info) == None
 
     proposal.rawStatus = ProposalRawStatus.FORCED.value
-    proposal.status() == ProposalStatus.UNKNOWN
+    proposal.status(info) == ProposalStatus.UNKNOWN
 
 
 def test_proposal_member_did_vote():
@@ -168,7 +174,7 @@ def test_proposal_majority_quorum(monkeypatch: MonkeyPatch):
 
     info = None
 
-    monkeypatch.setattr(storage, "list_members", lambda info: [])
+    monkeypatch.setattr(storage, "list_members", lambda info, *args, **kwargs: [])
 
     assert proposal.currentMajority() == 0
     assert proposal.currentQuorum(info) == 0
@@ -196,7 +202,7 @@ def test_proposal_majority_quorum(monkeypatch: MonkeyPatch):
 
     members = yesVotersMembers + noVotersMembers + otherMembers
 
-    monkeypatch.setattr(storage, "list_members", lambda info: members)
+    monkeypatch.setattr(storage, "list_members", lambda info, *args, **kwargs: members)
 
     proposal.yesVoters = [member["memberAddress"] for member in yesVotersMembers]
 
