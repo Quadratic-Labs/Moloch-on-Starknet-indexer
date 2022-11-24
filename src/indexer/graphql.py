@@ -107,8 +107,12 @@ class Proposal:
         return sum([member["shares"] for member in self.noVotersMembers])
 
     @strawberry.field
-    def totalVotableShares(self, info) -> int:
-        members = storage.list_members(info)
+    def totalVotableShares(self, info: Info) -> int:
+        members = storage.list_votable_members(
+            info=info,
+            voting_period_ending_at=self.votingPeriodEndingAt(),
+            submitted_at=self.submittedAt,
+        )
         return sum([member["shares"] for member in members])
 
     @strawberry.field
