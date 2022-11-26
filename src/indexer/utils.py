@@ -128,4 +128,9 @@ def utcnow() -> datetime:
     """Wrapper for datetime.utcnow, it should be used instead of datetime.utcnow
     Tests should mock it to tests functions that uses current time
     """
-    return datetime.utcnow()
+    # down precision of the time to millisecond to keep it aligned with mongo
+    now = datetime.utcnow().replace(tzinfo=timezone.utc)
+    millisecond = int(now.microsecond / 10000)
+    microsecond = millisecond * 10000
+    now = now.replace(microsecond=microsecond)
+    return now

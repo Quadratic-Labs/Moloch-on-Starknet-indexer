@@ -174,7 +174,9 @@ def test_proposal_majority_quorum(monkeypatch: MonkeyPatch):
 
     info = None
 
-    monkeypatch.setattr(storage, "list_members", lambda info, *args, **kwargs: [])
+    monkeypatch.setattr(
+        storage, "list_votable_members", lambda info, *args, **kwargs: []
+    )
 
     assert proposal.currentMajority() == 0
     assert proposal.currentQuorum(info) == 0
@@ -202,7 +204,9 @@ def test_proposal_majority_quorum(monkeypatch: MonkeyPatch):
 
     members = yesVotersMembers + noVotersMembers + otherMembers
 
-    monkeypatch.setattr(storage, "list_members", lambda info, *args, **kwargs: members)
+    monkeypatch.setattr(
+        storage, "list_votable_members", lambda info, *args, **kwargs: members
+    )
 
     proposal.yesVoters = [member["memberAddress"] for member in yesVotersMembers]
 

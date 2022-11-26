@@ -9,6 +9,7 @@ from typing import Callable, Optional, Any
 import pymongo
 import pytest
 import requests
+import mongomock
 from apibara import EventFilter
 from python_on_whales import Container
 from starknet_py.contract import Contract
@@ -225,6 +226,12 @@ def run_indexer_process(
 def mongo_client(docker_compose_services) -> pymongo.MongoClient:
     # TODO: explore https://github.com/mongomock/mongomock
     return pymongo.MongoClient(config.MONGO_URL, tz_aware=True)
+
+
+# @pytest.fixture(scope="session")
+@pytest.fixture
+def mongomock_client() -> pymongo.MongoClient:
+    return mongomock.MongoClient(config.MONGO_URL, tz_aware=True)
 
 
 @pytest.fixture
