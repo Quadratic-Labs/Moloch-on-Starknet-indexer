@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 from pymongo.database import Database
 from strawberry.types import Info
 
@@ -53,3 +54,41 @@ def list_votable_members(
     # TODO: Use dataloaders or any other mechanism for caching
     members = db["members"].find({"_chain.valid_to": None, **query})
     return members
+
+
+def list_proposals(info: Info, skip: int, limit: int):
+    db: Database = info.context["db"]
+
+    current_block_filter = {"_chain.valid_to": None}
+
+    # TODO: use $set with MongoDB Expressions[1] to add fields we need for sorting
+    # like timeRemaining and processedAt
+    # [1]: https://www.mongodb.com/docs/manual/meta/aggregation-quick-reference/#std-label-aggregation-expressions
+    pipeline: list[dict[str, Any]] = [
+        {"$match": current_block_filter},
+        {"$skip": skip},
+        {"$limit": limit},
+        {
+            "$lookup": {
+                "from": "members",
+                "pipeline": [{"$match": current_block_filter}],
+                "localField": "yesVoters",
+                "foreignField": "memberAddress",
+                "as": "yesVotersMembers",
+            }
+        },
+        {
+            "$lookup": {
+                "from": "members",
+                "pipeline": [{"$match": current_block_filter}],
+                "localField": "noVoters",
+                "foreignField": "memberAddress",
+                "as": "noVotersMembers",
+            }
+        },
+        {"$sort": {"submittedAt": -1}},
+    ]
+
+    proposals = db["proposals"].aggregate(pipeline)
+
+    return proposals

@@ -233,44 +233,6 @@ PROPOSAL_TYPE_TO_CLASS: dict[str, Type[Proposal]] = {
 }
 
 
-def get_proposals(info: Info, limit: int = 10, skip: int = 0) -> List[Proposal]:
-    db: Database = info.context["db"]
-
-    current_block_filter = {"_chain.valid_to": None}
-
-    # TODO: use $set with MongoDB Expressions[1] to add fields we need for sorting
-    # like timeRemaining and processedAt
-    # [1]: https://www.mongodb.com/docs/manual/meta/aggregation-quick-reference/#std-label-aggregation-expressions
-    pipeline: list[dict[str, Any]] = [
-        {"$match": current_block_filter},
-        {"$skip": skip},
-        {"$limit": limit},
-        {
-            "$lookup": {
-                "from": "members",
-                "pipeline": [{"$match": current_block_filter}],
-                "localField": "yesVoters",
-                "foreignField": "memberAddress",
-                "as": "yesVotersMembers",
-            }
-        },
-        {
-            "$lookup": {
-                "from": "members",
-                "pipeline": [{"$match": current_block_filter}],
-                "localField": "noVoters",
-                "foreignField": "memberAddress",
-                "as": "noVotersMembers",
-            }
-        },
-        {"$sort": {"submittedAt": -1}},
-    ]
-
-    query = db["proposals"].aggregate(pipeline)
-
-    return [PROPOSAL_TYPE_TO_CLASS[doc["type"]].from_mongo(doc) for doc in query]
-
-
 @strawberry.type
 class Member:
     memberAddress: HexValue
@@ -299,13 +261,13 @@ class Member:
         return member
 
 
+def get_proposals(info: Info, limit: int = 10, skip: int = 0) -> List[Proposal]:
+    proposals = storage.list_proposals(info=info, skip=skip, limit=limit)
+    return [PROPOSAL_TYPE_TO_CLASS[doc["type"]].from_mongo(doc) for doc in proposals]
+
+
 def get_members(info: Info, limit: int = 10, skip: int = 0) -> List[Member]:
-    db: Database = info.context["db"]
-
-    current_block_filter = {"_chain.valid_to": None}
-
-    members = db["members"].find(current_block_filter)
-
+    members = storage.list_members(info=info)
     return [Member.from_mongo(doc) for doc in members]
 
 
@@ -327,7 +289,7 @@ class IndexerGraphQLView(GraphQLView):
 async def run_graphql(
     mongo_url: str, db_name: str, host: str = "localhost", port: int = 8080
 ):
-    mongo = MongoClient(mongo_url)
+    mongo = MongoClient(mongo_url, tz_aware=True)
     db = mongo[db_name]
 
     schema = strawberry.Schema(query=Query, types=[Signaling, Onboard])
