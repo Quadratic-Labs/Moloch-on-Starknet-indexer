@@ -2,8 +2,10 @@ from datetime import timedelta
 from unittest.mock import Mock
 from pymongo import MongoClient
 
-from indexer.storage import list_members, list_votable_members
+from indexer.storage import list_members, list_votable_members, list_proposals
 from indexer import utils
+
+from . import list_proposals_data
 
 
 def test_list_members(mongomock_client: MongoClient):
@@ -276,3 +278,22 @@ def test_list_votable_members_jailed_at_and_exited_at(mongomock_client: MongoCli
     )
 
     assert list(members) == votable_members
+
+
+def test_list_proposals(mongomock_client: MongoClient):
+    info = Mock(context={"db": mongomock_client.db})
+
+    mongomock_client.db.proposals.insert_many(list_proposals_data.proposals)
+    mongomock_client.db.members.insert_many(list_proposals_data.members)
+
+    proposals = list_proposals(info, disable_pipeline_operator=True)
+    proposals = list(proposals)
+
+    # Remove MongoDB auto generated _id from the result to be able to compare it
+    # to the expected one
+    for proposal in proposals:
+        del proposal["_id"]
+        for member in proposal["yesVotersMembers"] + proposal["noVotersMembers"]:
+            del member["_id"]
+
+    assert proposals == list_proposals_data.list_proposals_query_expected_result
