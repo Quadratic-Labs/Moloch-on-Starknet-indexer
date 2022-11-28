@@ -60,7 +60,8 @@ def list_proposals(
     info: Info,
     skip: Optional[int] = None,
     limit: Optional[int] = None,
-    disable_pipeline_operator=False,  # Used for unit tests because mongomock doesn't support it
+    # Used for unit tests because mongomock doesn't support pipeline operator
+    disable_pipeline_operator=False,
 ):
     db: Database = info.context["db"]
 
@@ -94,10 +95,12 @@ def list_proposals(
         {"$sort": {"submittedAt": -1}},
     ]
 
+    # Used for unit tests because mongomock doesn't support pipeline operator
     if disable_pipeline_operator:
         for step in pipeline:
-            if "pipeline" in step:
-                del step["pipeline"]
+            if lookup := step.get("$lookup"):
+                if "pipeline" in lookup:
+                    del lookup["pipeline"]
 
     proposals = db["proposals"].aggregate(pipeline)
 
