@@ -227,9 +227,38 @@ class Onboard(Proposal):
     tributeAddress: HexValue
 
 
+@strawberry.type
+class GuildKick(Proposal):
+    memberAddress: HexValue
+
+
+@strawberry.type
+class Whitelist(Proposal):
+    tokenName: str
+    tokenAddress: HexValue
+
+
+@strawberry.type
+class UnWhitelist(Proposal):
+    tokenName: str
+    tokenAddress: HexValue
+
+
+@strawberry.type
+class Swap(Proposal):
+    tributeAddress: HexValue
+    tributeOffered: int
+    paymentAddress: HexValue
+    paymentRequested: int
+
+
 PROPOSAL_TYPE_TO_CLASS: dict[str, Type[Proposal]] = {
     "Signaling": Signaling,
     "Onboard": Onboard,
+    "GuildKick": GuildKick,
+    "Whitelist": Whitelist,
+    "UnWhitelist": UnWhitelist,
+    "Swap": Swap,
 }
 
 
