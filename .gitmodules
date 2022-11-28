@@ -1,4 +1,4 @@
 [submodule "cairo-contracts"]
 	path = cairo-contracts
-	url = git@bitbucket.org:zamoj/cairo-contracts.git
+	url = git@github.com:quadratic-labs/DaoContracts.git
 	branch = develop
