@@ -297,7 +297,7 @@ async def test_whitelist(
     tokenName="Some Token",
     tokenAddress=constants.ACCOUNT_ADDRESS,
 ):
-    invoke_result = await contract.functions["submitApproveToken"].invoke(
+    invoke_result = await contract.functions["submitWhitelist"].invoke(
         title=utils.str_to_felt(title),
         link=utils.str_to_felt(link),
         tokenName=utils.str_to_felt(tokenName),
@@ -352,7 +352,7 @@ async def test_unwhitelist(
     tokenName="Some Token",
     tokenAddress=constants.FEE_TOKEN_ADDRESS,
 ):
-    invoke_result = await contract.functions["submitRemoveToken"].invoke(
+    invoke_result = await contract.functions["submitUnWhitelist"].invoke(
         title=utils.str_to_felt(title),
         link=utils.str_to_felt(link),
         tokenName=utils.str_to_felt(tokenName),

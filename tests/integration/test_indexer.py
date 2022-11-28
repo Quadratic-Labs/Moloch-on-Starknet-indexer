@@ -141,10 +141,9 @@ async def test_onboard_added(
     assert proposal["shares"] == shares
     assert proposal["tributeAddress"] == utils.int_to_bytes(tribute_address)
     assert proposal["tributeOffered"] == tribute_offered
-    assert proposal["rawStatus"] == ProposalRawStatus.FORCED.value
+    assert proposal["rawStatus"] == ProposalRawStatus.SUBMITTED.value
     assert proposal["rawStatusHistory"] == [
         [ProposalRawStatus.SUBMITTED.value, block_datetime],
-        [ProposalRawStatus.FORCED.value, block_datetime],
     ]
 
 
@@ -335,7 +334,7 @@ async def test_whitelist_added(
     assert proposal["id"] == 0
     assert proposal["title"] == title
     assert proposal["link"] == link
-    assert proposal["type"] == "ApproveToken"
+    assert proposal["type"] == "Whitelist"
     assert proposal["tokenName"] == tokenName
     assert proposal["tokenAddress"] == utils.int_to_bytes(tokenAddress)
 
@@ -398,7 +397,7 @@ async def test_unwhitelist_added(
     assert proposal["id"] == 0
     assert proposal["title"] == title
     assert proposal["link"] == link
-    assert proposal["type"] == "RemoveToken"
+    assert proposal["type"] == "UnWhitelist"
     assert proposal["tokenName"] == tokenName
     assert proposal["tokenAddress"] == utils.int_to_bytes(tokenAddress)
 
