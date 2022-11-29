@@ -283,6 +283,8 @@ class MemberAdded(Event):
     memberAddress: bytes
     shares: int
     loot: int
+    onboardedAt: BlockNumber
+    lastProposalYesVote: int
 
     async def _handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
