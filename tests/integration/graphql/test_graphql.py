@@ -1,5 +1,5 @@
-from .utils import wait_for_graphql
-from ..conftest import GraphQLProcessRunner
+from ..utils import wait_for_graphql
+from ...conftest import GraphQLProcessRunner
 
 
 async def test_server(run_graphql_process: GraphQLProcessRunner):

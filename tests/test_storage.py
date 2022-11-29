@@ -5,7 +5,7 @@ from pytest import MonkeyPatch
 
 from indexer import utils, storage
 
-from . import list_proposals_data
+from .data import list_proposals_data
 
 
 def test_list_members(mongomock_client: MongoClient):

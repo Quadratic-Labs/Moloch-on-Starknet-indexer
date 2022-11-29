@@ -4,9 +4,11 @@ from apibara import EventFilter
 from starknet_py.contract import Contract
 from starknet_py.net.account.account_client import AccountClient
 
+from ..events import test_proposals
 
-from ..conftest import Account, IndexerProcessRunner
-from . import constants, test_events, utils
+
+from ...conftest import Account, IndexerProcessRunner
+from .. import constants, utils
 from indexer.indexer import default_new_events_handler
 from indexer.models import ProposalRawStatus
 from indexer.utils import get_block_datetime_utc
@@ -35,7 +37,7 @@ async def test_proposal_added(
 
     indexer = run_indexer_process(filters, default_new_events_handler)
 
-    transaction_receipt = await test_events.test_signaling(
+    transaction_receipt = await test_proposals.test_signaling(
         contract=contract,
         contract_events=contract_events,
         client=client,
@@ -105,7 +107,7 @@ async def test_onboard_added(
 
     indexer = run_indexer_process(filters, default_new_events_handler)
 
-    transaction_receipt = await test_events.test_onboard(
+    transaction_receipt = await test_proposals.test_onboard(
         contract=contract,
         contract_events=contract_events,
         client=client,
@@ -182,7 +184,7 @@ async def test_swap_added(
 
     indexer = run_indexer_process(filters, default_new_events_handler)
 
-    transaction_receipt = await test_events.test_swap(
+    transaction_receipt = await test_proposals.test_swap(
         contract=contract,
         contract_events=contract_events,
         client=client,
@@ -248,7 +250,7 @@ async def test_guild_kick_added(
 
     indexer = run_indexer_process(filters, default_new_events_handler)
 
-    transaction_receipt = await test_events.test_guild_kick(
+    transaction_receipt = await test_proposals.test_guild_kick(
         contract=contract,
         contract_events=contract_events,
         client=client,
@@ -309,7 +311,7 @@ async def test_whitelist_added(
 
     indexer = run_indexer_process(filters, default_new_events_handler)
 
-    transaction_receipt = await test_events.test_whitelist(
+    transaction_receipt = await test_proposals.test_whitelist(
         contract=contract,
         contract_events=contract_events,
         client=client,
@@ -372,7 +374,7 @@ async def test_unwhitelist_added(
 
     indexer = run_indexer_process(filters, default_new_events_handler)
 
-    transaction_receipt = await test_events.test_unwhitelist(
+    transaction_receipt = await test_proposals.test_unwhitelist(
         contract=contract,
         contract_events=contract_events,
         client=client,
@@ -400,108 +402,3 @@ async def test_unwhitelist_added(
     assert proposal["type"] == "UnWhitelist"
     assert proposal["tokenName"] == tokenName
     assert proposal["tokenAddress"] == utils.int_to_bytes(tokenAddress)
-
-
-@pytest.mark.parametrize("vote", [0, 1])
-async def test_vote_submitted(
-    vote,
-    run_indexer_process: IndexerProcessRunner,
-    contract: Contract,
-    contract_events: dict,
-    client: AccountClient,
-    mongo_client: pymongo.MongoClient,
-):
-    title = "Indexer signaling event"
-    link = "Indexer signaling link"
-
-    filters = [
-        EventFilter.from_event_name(
-            name="ProposalAdded",
-            address=contract.address,
-        ),
-        EventFilter.from_event_name(
-            name="ProposalParamsUpdated",
-            address=contract.address,
-        ),
-        EventFilter.from_event_name(
-            name="VoteSubmitted",
-            address=contract.address,
-        ),
-    ]
-
-    indexer = run_indexer_process(filters, default_new_events_handler)
-
-    proposal_transaction_receipt, transaction_receipt = await test_events.test_vote(
-        vote=vote,
-        contract=contract,
-        contract_events=contract_events,
-        client=client,
-        title=title,
-        link=link,
-    )
-    proposal_block = await client.get_block(proposal_transaction_receipt.block_hash)
-    proposal_block_datetime = get_block_datetime_utc(proposal_block)
-
-    mongo_db = mongo_client[indexer.id]
-    # Wait for the indexer to reach the transaction block_number to be sure
-    # our events were processed
-    utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
-
-    proposals = list(mongo_db["proposals"].find({"_chain.valid_to": None}))
-    assert len(proposals) == 1
-
-    proposal = proposals[0]
-
-    # assert int(event["address"].hex(), 16) == contract.address
-    assert proposal["id"] == 0
-    assert proposal["title"] == title
-    assert proposal["link"] == link
-    assert proposal["type"] == "Signaling"
-    assert proposal["submittedBy"] == utils.int_to_bytes(client.address)
-    assert proposal["rawStatus"] == ProposalRawStatus.SUBMITTED.value
-    if vote:
-        assert proposal["yesVoters"] == [utils.int_to_bytes(client.address)]
-    else:
-        assert proposal["noVoters"] == [utils.int_to_bytes(client.address)]
-
-    assert proposal["submittedAt"] == proposal_block_datetime
-    assert proposal["rawStatusHistory"] == [
-        [ProposalRawStatus.SUBMITTED.value, proposal_block_datetime]
-    ]
-
-
-# We're adding the first predeployed account in devnet manually in main.cairo
-# That's why this test works without invoking any contract function
-async def test_member_added(
-    run_indexer_process: IndexerProcessRunner,
-    contract: Contract,
-    client: AccountClient,
-    mongo_client: pymongo.MongoClient,
-):
-    filters = [
-        EventFilter.from_event_name(
-            name="MemberAdded",
-            address=contract.address,
-        ),
-    ]
-
-    indexer = run_indexer_process(filters, default_new_events_handler)
-
-    mongo_db = mongo_client[indexer.id]
-
-    # Wait for the indexer to reach the transaction block_number to be sure
-    # our events were processed
-    block = await client.get_block("latest")
-    utils.wait_for_indexer(mongo_db, block.block_number)
-
-    block_datetime = get_block_datetime_utc(block)
-
-    members = list(mongo_db["members"].find({"_chain.valid_to": None}))
-    assert len(members) == 1
-
-    member = members[0]
-
-    assert member["memberAddress"] == utils.int_to_bytes(client.address)
-    assert member["onboardedAt"] == block_datetime
-    assert member["shares"] == 1
-    assert member["loot"] == 50
