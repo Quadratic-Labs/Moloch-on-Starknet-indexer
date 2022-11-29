@@ -1,9 +1,9 @@
 from datetime import timedelta
 from unittest.mock import Mock
 from pymongo import MongoClient
+from pytest import MonkeyPatch
 
-from indexer.storage import list_members, list_votable_members, list_proposals
-from indexer import utils
+from indexer import utils, storage
 
 from . import list_proposals_data
 
@@ -11,7 +11,7 @@ from . import list_proposals_data
 def test_list_members(mongomock_client: MongoClient):
     info = Mock(context={"db": mongomock_client.db})
 
-    members = list_members(info)
+    members = storage.list_members(info)
 
     assert list(members) == []
 
@@ -22,7 +22,7 @@ def test_list_members(mongomock_client: MongoClient):
     ]
     mongomock_client.db.members.insert_many(new_members)
 
-    members = list_members(info)
+    members = storage.list_members(info)
 
     assert list(members) == new_members
 
@@ -46,7 +46,7 @@ def test_list_members_query(mongomock_client: MongoClient):
 
     query = {"onboardedAt": {"$lte": now}}
 
-    members = list_members(info, query=query)
+    members = storage.list_members(info, query=query)
 
     assert list(members) == onboarded_before_members
 
@@ -57,7 +57,7 @@ def test_list_votable_members(mongomock_client: MongoClient):
     submitted_at = utils.utcnow()
     voting_period_ending_at = submitted_at + timedelta(days=7)
 
-    members = list_votable_members(
+    members = storage.list_votable_members(
         info=info,
         voting_period_ending_at=voting_period_ending_at,
         submitted_at=submitted_at,
@@ -72,7 +72,7 @@ def test_list_votable_members(mongomock_client: MongoClient):
     ]
     mongomock_client.db.members.insert_many(new_members)
 
-    members = list_votable_members(
+    members = storage.list_votable_members(
         info=info,
         voting_period_ending_at=voting_period_ending_at,
         submitted_at=submitted_at,
@@ -104,7 +104,7 @@ def test_list_votable_members_onboarded_at(mongomock_client: MongoClient):
     all_members = votable_members + non_votable_members
     mongomock_client.db.members.insert_many(all_members)
 
-    members = list_votable_members(
+    members = storage.list_votable_members(
         info=info,
         voting_period_ending_at=voting_period_ending_at,
         submitted_at=submitted_at,
@@ -158,7 +158,7 @@ def test_list_votable_members_jailed_at(mongomock_client: MongoClient):
     all_members = votable_members + non_votable_members
     mongomock_client.db.members.insert_many(all_members)
 
-    members = list_votable_members(
+    members = storage.list_votable_members(
         info=info,
         voting_period_ending_at=voting_period_ending_at,
         submitted_at=submitted_at,
@@ -212,7 +212,7 @@ def test_list_votable_members_exited_at(mongomock_client: MongoClient):
     all_members = votable_members + non_votable_members
     mongomock_client.db.members.insert_many(all_members)
 
-    members = list_votable_members(
+    members = storage.list_votable_members(
         info=info,
         voting_period_ending_at=voting_period_ending_at,
         submitted_at=submitted_at,
@@ -271,7 +271,7 @@ def test_list_votable_members_jailed_at_and_exited_at(mongomock_client: MongoCli
     all_members = votable_members + non_votable_members
     mongomock_client.db.members.insert_many(all_members)
 
-    members = list_votable_members(
+    members = storage.list_votable_members(
         info=info,
         voting_period_ending_at=voting_period_ending_at,
         submitted_at=submitted_at,
@@ -280,13 +280,13 @@ def test_list_votable_members_jailed_at_and_exited_at(mongomock_client: MongoCli
     assert list(members) == votable_members
 
 
-def test_list_proposals(mongomock_client: MongoClient):
+def test_list_proposals(mongomock_client: MongoClient, monkeypatch: MonkeyPatch):
     info = Mock(context={"db": mongomock_client.db})
 
     mongomock_client.db.proposals.insert_many(list_proposals_data.proposals)
     mongomock_client.db.members.insert_many(list_proposals_data.members)
 
-    proposals = list_proposals(info, disable_pipeline_operator=True)
+    proposals = storage.list_proposals(info)
     proposals = list(proposals)
 
     # Remove MongoDB auto generated _id from the result to be able to compare it

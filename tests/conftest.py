@@ -5,6 +5,7 @@ from datetime import datetime
 from multiprocessing import Process
 from pathlib import Path
 from typing import Callable, Optional, Any
+from pytest import MonkeyPatch
 
 import pymongo
 import pytest
@@ -230,7 +231,8 @@ def mongo_client(docker_compose_services) -> pymongo.MongoClient:
 
 # @pytest.fixture(scope="session")
 @pytest.fixture
-def mongomock_client() -> pymongo.MongoClient:
+def mongomock_client(monkeypatch: MonkeyPatch) -> pymongo.MongoClient:
+    monkeypatch.setenv("USING_MONGOMOCK", "true")
     return mongomock.MongoClient(config.MONGO_URL, tz_aware=True)
 
 

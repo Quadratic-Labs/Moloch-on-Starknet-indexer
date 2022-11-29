@@ -306,6 +306,9 @@ class Query:
     members: List[Member] = strawberry.field(resolver=get_members)
 
 
+schema = strawberry.Schema(query=Query, types=list(PROPOSAL_TYPE_TO_CLASS.values()))
+
+
 class IndexerGraphQLView(GraphQLView):
     def __init__(self, db, **kwargs):
         super().__init__(**kwargs)
@@ -321,7 +324,6 @@ async def run_graphql(
     mongo = MongoClient(mongo_url, tz_aware=True)
     db = mongo[db_name]
 
-    schema = strawberry.Schema(query=Query, types=[Signaling, Onboard])
     view = IndexerGraphQLView(db, schema=schema)
 
     logger.info(schema.as_str())

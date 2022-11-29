@@ -1,8 +1,12 @@
 from datetime import timedelta
 
+
+from pymongo import MongoClient
+
 from indexer.graphql import Proposal
 from indexer.models import ProposalStatus, ProposalRawStatus
 from indexer import utils, storage
+from indexer.graphql import schema
 
 from pytest import MonkeyPatch
 
@@ -218,3 +222,20 @@ def test_proposal_majority_quorum(monkeypatch: MonkeyPatch):
     assert proposal.currentQuorum(info) == 80
     assert proposal.totalVotableShares(info) == 25
     assert proposal.currentMajority() == 75
+
+
+def test_empty_query(mongomock_client: MongoClient):
+    context_value = {"db": mongomock_client.db}
+
+    query = """
+        query Proposals {
+            proposals {
+                id
+            }
+        }
+    """
+
+    result = schema.execute_sync(query, context_value=context_value)
+
+    assert result.errors is None
+    assert result.data["proposals"] == []

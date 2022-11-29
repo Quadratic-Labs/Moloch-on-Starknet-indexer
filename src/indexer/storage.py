@@ -1,4 +1,5 @@
 from datetime import datetime
+import os
 from typing import Any, Optional
 from pymongo.database import Database
 from strawberry.types import Info
@@ -56,15 +57,10 @@ def list_votable_members(
     return members
 
 
-def list_proposals(
-    info: Info,
+def get_list_proposals_query(
     skip: Optional[int] = None,
     limit: Optional[int] = None,
-    # Used for unit tests because mongomock doesn't support pipeline operator
-    disable_pipeline_operator=False,
 ):
-    db: Database = info.context["db"]
-
     current_block_filter = {"_chain.valid_to": None}
 
     # TODO: use $set with MongoDB Expressions[1] to add fields we need for sorting
@@ -95,12 +91,25 @@ def list_proposals(
         {"$sort": {"submittedAt": -1}},
     ]
 
-    # Used for unit tests because mongomock doesn't support pipeline operator
-    if disable_pipeline_operator:
+    # Disable pipeline operator when using mongomock
+    # because it doesn't support it
+    if os.getenv("USING_MONGOMOCK", "").lower() == "true":
         for step in pipeline:
             if lookup := step.get("$lookup"):
                 if "pipeline" in lookup:
                     del lookup["pipeline"]
+
+    return pipeline
+
+
+def list_proposals(
+    info: Info,
+    skip: Optional[int] = None,
+    limit: Optional[int] = None,
+):
+    db: Database = info.context["db"]
+
+    pipeline = get_list_proposals_query(skip=skip, limit=limit)
 
     proposals = db["proposals"].aggregate(pipeline)
 
