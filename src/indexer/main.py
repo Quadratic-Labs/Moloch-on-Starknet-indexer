@@ -7,10 +7,7 @@ import click
 from starknet_py.net.gateway_client import GatewayClient
 from apibara.model import EventFilter
 
-from indexer.graphql import run_graphql
-from indexer.indexer import run_indexer
-from indexer.utils import get_contract, get_contract_events
-from indexer import config
+from indexer import config, utils, indexer, graphql
 
 
 def async_command(coro):
@@ -64,7 +61,7 @@ def cli():
     help="The list of the events to listen for, defaults to all events coming from the contract address.",
 )
 @async_command
-async def start(
+async def start_indexer(
     server_url,
     mongo_url,
     starknet_network_url,
@@ -76,15 +73,15 @@ async def start(
     """Start the Apibara indexer."""
     starknet_client = GatewayClient(starknet_network_url)
 
-    contract = await get_contract(contract_address, starknet_client)
-    contract_events = get_contract_events(contract)
+    contract = await utils.get_contract(contract_address, starknet_client)
+    contract_events = utils.get_contract_events(contract)
 
     if events is None:
         events = contract_events.keys()
 
     filters = [EventFilter.from_event_name(name, contract_address) for name in events]
 
-    await run_indexer(
+    await indexer.run_indexer(
         server_url=server_url,
         mongo_url=mongo_url,
         starknet_network_url=starknet_network_url,
@@ -104,10 +101,24 @@ async def start(
     show_default=True,
     help="MongoDB database name.",
 )
+@click.option(
+    "--host",
+    default="localhost",
+    show_default=True,
+    help="GraphQL server host.",
+)
+@click.option(
+    "--port",
+    default=8080,
+    show_default=True,
+    help="GraphQL server port.",
+)
 @async_command
-async def graphql(mongo_url, db_name):
+async def start_graphql(mongo_url, db_name, host, port):
     """Start the GraphQL server."""
-    await run_graphql(
+    await graphql.run_graphql(
         mongo_url=mongo_url,
         db_name=db_name,
+        host=host,
+        port=port,
     )
