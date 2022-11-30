@@ -296,4 +296,4 @@ def test_list_proposals(mongomock_client: MongoClient, monkeypatch: MonkeyPatch)
         for member in proposal["yesVotersMembers"] + proposal["noVotersMembers"]:
             del member["_id"]
 
-    assert proposals == data.LIST_PROPOSALS_QUERY_EXPECTED_RESULT
+    assert proposals == data.LIST_PROPOSALS_MONGO_QUERY_EXPECTED_RESULT

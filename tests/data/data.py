@@ -216,7 +216,7 @@ PROPOSALS = [
     },
 ]
 
-LIST_PROPOSALS_QUERY_EXPECTED_RESULT = [
+LIST_PROPOSALS_MONGO_QUERY_EXPECTED_RESULT = [
     {
         "id": 0,
         "title": "Indexer signaling event",
