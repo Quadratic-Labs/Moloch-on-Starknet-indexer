@@ -16,6 +16,7 @@ strawberry-graphql = {extras = ["debug-server"], version = "^0.133.5"}
 aiohttp = "^3.8.3"
 websockets = ">6.0.0"
 web3 = ">4.10.0"
+pre-commit = "^2.20.0"
 
 [tool.poetry.dev-dependencies]
 black = "^22.6.0"
