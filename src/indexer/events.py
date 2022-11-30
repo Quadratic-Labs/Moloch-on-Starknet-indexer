@@ -296,14 +296,14 @@ class MemberAdded(Event):
 
 
 ALL_EVENTS: dict[str, Type[Event]] = {
-    "ProposalAdded": ProposalAdded,
-    "OnboardProposalAdded": OnboardProposalAdded,
     "ProposalStatusUpdated": ProposalStatusUpdated,
     "ProposalParamsUpdated": ProposalParamsUpdated,
-    "SwapProposalAdded": SwapProposalAdded,
+    "ProposalAdded": ProposalAdded,
+    "OnboardProposalAdded": OnboardProposalAdded,
     "GuildKickProposalAdded": GuildKickProposalAdded,
     "WhitelistProposalAdded": WhitelistProposalAdded,
     "UnWhitelistProposalAdded": UnWhitelistProposalAdded,
+    "SwapProposalAdded": SwapProposalAdded,
     "VoteSubmitted": VoteSubmitted,
     "MemberAdded": MemberAdded,
 }

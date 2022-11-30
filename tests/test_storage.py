@@ -5,7 +5,7 @@ from pytest import MonkeyPatch
 
 from indexer import utils, storage
 
-from .data import list_proposals_data
+from .data import data
 
 
 def test_list_members(mongomock_client: MongoClient):
@@ -283,8 +283,8 @@ def test_list_votable_members_jailed_at_and_exited_at(mongomock_client: MongoCli
 def test_list_proposals(mongomock_client: MongoClient, monkeypatch: MonkeyPatch):
     info = Mock(context={"db": mongomock_client.db})
 
-    mongomock_client.db.proposals.insert_many(list_proposals_data.proposals)
-    mongomock_client.db.members.insert_many(list_proposals_data.members)
+    mongomock_client.db.proposals.insert_many(data.PROPOSALS)
+    mongomock_client.db.members.insert_many(data.MEMBERS)
 
     proposals = storage.list_proposals(info)
     proposals = list(proposals)
@@ -296,4 +296,4 @@ def test_list_proposals(mongomock_client: MongoClient, monkeypatch: MonkeyPatch)
         for member in proposal["yesVotersMembers"] + proposal["noVotersMembers"]:
             del member["_id"]
 
-    assert proposals == list_proposals_data.list_proposals_query_expected_result
+    assert proposals == data.LIST_PROPOSALS_QUERY_EXPECTED_RESULT

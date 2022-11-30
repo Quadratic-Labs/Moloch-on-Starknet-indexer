@@ -17,13 +17,13 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 
-def parse_hex(value):
+def parse_hex(value: str) -> bytes:
     if not value.startswith("0x"):
         raise ValueError("invalid Hex value")
     return bytes.fromhex(value.replace("0x", ""))
 
 
-def serialize_hex(token_id):
+def serialize_hex(token_id: bytes) -> str:
     return "0x" + token_id.hex()
 
 
