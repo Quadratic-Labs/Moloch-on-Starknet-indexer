@@ -10,10 +10,29 @@ async def test_updateMembers(
     contract: Contract,
     contract_events: dict,
     client: AccountClient,
+    address=0x363B71D002935E7822EC0B1BAF02EE90D64F3458939B470E3E629390436510B,
+    delegateAddress=35555,
+    shares=42,
+    loot=42,
+    jailed=0,
+    lastProposalYesVote=3,
+    onboardedAt=1,
+):
+    info = {
+        "address": address,
+        "delegateAddress": delegateAddress,
+        "shares": shares,
+        "loot": loot,
+        "jailed": jailed,
+        "lastProposalYesVote": lastProposalYesVote,
+        "onboardedAt": onboardedAt,
+    }
 
-    invoke_result = await contract.functions["submitSignaling"].invoke(
-        title=title, link=link, max_fee=10**16
+    invoke_result = await contract.functions["Member_update_member_proxy"].invoke(
+        info=info,
+        max_fee=10**16,
     )
+
     await invoke_result.wait_for_acceptance()
 
     transaction_hash = invoke_result.hash
@@ -24,7 +43,7 @@ async def test_updateMembers(
 
     # Takes an abi of the event which data we want to serialize
     # We can get it from the contract abi
-    emitted_event_abi = contract_events["ProposalAdded"]
+    emitted_event_abi = contract_events["MemberUpdated"]
 
     # ProposalAdded.emit(id=info.id, title=info.title, link=info.link, type=info.type, submittedBy=info.submittedBy, submittedAt=info.submittedAt);
 
@@ -38,10 +57,12 @@ async def test_updateMembers(
         value_types=emitted_event_abi["data"], values=events[0].data
     )
 
-    assert python_data.id == 0
-    assert utils.felt_to_str(python_data.title) == title
-    assert utils.felt_to_str(python_data.link) == link
-    assert python_data.submittedAt == transaction_receipt.block_number
-    assert python_data.submittedBy == client.address
+    assert python_data.memberAddress == address
+    assert python_data.delegateAddress == delegateAddress
+    assert python_data.loot == loot
+    assert python_data.shares == shares
+    assert python_data.jailed == jailed
+    assert python_data.lastProposalYesVote == lastProposalYesVote
+    assert python_data.onboardedAt == onboardedAt
 
     return transaction_receipt
