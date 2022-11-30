@@ -2,15 +2,16 @@
 sure the integration tests environment is working as expected
 """
 import json
-import pymongo
 from pathlib import Path
+
+import pymongo
+from apibara import EventFilter
 from starknet_py.contract import Contract
 from starknet_py.net.account.account_client import AccountClient
 from starknet_py.utils.data_transformer.data_transformer import CairoSerializer
-from apibara import EventFilter
 
-from ..conftest import Account, IndexerProcessRunner
-from .utils import default_new_events_handler_test, wait_for_indexer
+from ..conftest import IndexerProcessRunner
+from .test_utils import default_new_events_handler_test, wait_for_indexer
 
 
 async def test_contract_abi(sample_contract: Contract, sample_contract_file: Path):

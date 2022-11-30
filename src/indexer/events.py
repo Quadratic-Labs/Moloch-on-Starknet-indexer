@@ -3,17 +3,17 @@ in instance from a `StarkNetEvent`, the from_starknet_event method uses the type
 given in the dataclass to know how to deserialize the values
 """
 
-from dataclasses import dataclass, asdict
 import logging
+from dataclasses import asdict, dataclass
 from typing import Type
 
 from apibara import Info
 from apibara.model import BlockHeader, StarkNetEvent
 
 from indexer.utils import get_block_datetime_utc
+
 from .deserializer import BlockNumber
 from .models import ProposalRawStatus
-
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +142,7 @@ class OnboardProposalAdded(Event):
 @dataclass
 class ProposalStatusUpdated(Event):
     id: int
-    status: int
+    status: str
 
     async def _handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent

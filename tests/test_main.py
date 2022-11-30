@@ -1,13 +1,11 @@
-from multiprocessing import Process
-import pytest
-from unittest.mock import Mock, AsyncMock
-from pytest import MonkeyPatch, LogCaptureFixture
+from unittest.mock import AsyncMock, Mock
 
 from apibara.model import EventFilter
-from starknet_py.net.gateway_client import GatewayClient
 from click.testing import CliRunner
+from pytest import LogCaptureFixture, MonkeyPatch
+
+from indexer import graphql, indexer, utils
 from indexer.main import cli
-from indexer import indexer, utils, graphql
 
 from . import config
 

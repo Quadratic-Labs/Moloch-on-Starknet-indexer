@@ -3,11 +3,11 @@ from apibara import EventFilter
 from starknet_py.contract import Contract
 from starknet_py.net.account.account_client import AccountClient
 
+from indexer import utils
+from indexer.indexer import default_new_events_handler
 
 from ...conftest import IndexerProcessRunner
-from .. import utils
-from indexer.indexer import default_new_events_handler
-from indexer.utils import get_block_datetime_utc
+from .. import test_utils
 
 
 # We're adding the first predeployed account in devnet manually in main.cairo
@@ -32,9 +32,9 @@ async def test_member_added(
     # Wait for the indexer to reach the transaction block_number to be sure
     # our events were processed
     block = await client.get_block("latest")
-    utils.wait_for_indexer(mongo_db, block.block_number)
+    test_utils.wait_for_indexer(mongo_db, block.block_number)
 
-    block_datetime = get_block_datetime_utc(block)
+    block_datetime = utils.get_block_datetime_utc(block)
 
     members = list(mongo_db["members"].find({"_chain.valid_to": None}))
     assert len(members) == 1

@@ -4,10 +4,10 @@ import asyncio
 from functools import wraps
 
 import click
-from starknet_py.net.gateway_client import GatewayClient
 from apibara.model import EventFilter
+from starknet_py.net.gateway_client import GatewayClient
 
-from indexer import config, utils, indexer, graphql
+from indexer import config, graphql, indexer, utils
 
 
 def async_command(coro):

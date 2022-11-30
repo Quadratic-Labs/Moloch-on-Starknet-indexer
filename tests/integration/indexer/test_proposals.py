@@ -1,17 +1,16 @@
-import pytest
 import pymongo
+import pytest
 from apibara import EventFilter
 from starknet_py.contract import Contract
 from starknet_py.net.account.account_client import AccountClient
 
-from ..events import test_proposals
-
-
-from ...conftest import Account, IndexerProcessRunner
-from .. import constants, utils
+from indexer import utils
 from indexer.indexer import default_new_events_handler
 from indexer.models import ProposalRawStatus
-from indexer.utils import get_block_datetime_utc
+
+from ...conftest import Account, IndexerProcessRunner
+from .. import constants, test_utils
+from ..events import test_proposals
 
 
 async def test_proposal_added(
@@ -45,12 +44,12 @@ async def test_proposal_added(
         link=link,
     )
     block = await client.get_block(transaction_receipt.block_hash)
-    block_datetime = get_block_datetime_utc(block)
+    block_datetime = utils.get_block_datetime_utc(block)
 
     mongo_db = mongo_client[indexer.id]
     # Wait for the indexer to reach the transaction block_number to be sure
     # our events were processed
-    utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
+    test_utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
 
     proposals = list(mongo_db["proposals"].find({"_chain.valid_to": None}))
     assert len(proposals) == 1
@@ -120,12 +119,12 @@ async def test_onboard_added(
         tribute_offered=tribute_offered,
     )
     block = await client.get_block(transaction_receipt.block_hash)
-    block_datetime = get_block_datetime_utc(block)
+    block_datetime = utils.get_block_datetime_utc(block)
 
     mongo_db = mongo_client[indexer.id]
     # Wait for the indexer to reach the transaction block_number to be sure
     # our events were processed
-    utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
+    test_utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
 
     # Apibara's chain-aware storage adds _chain.valid_to and _chain.valid_from
     # to every document, current documents have _chain.valid_to: null
@@ -199,7 +198,7 @@ async def test_swap_added(
     mongo_db = mongo_client[indexer.id]
     # Wait for the indexer to reach the transaction block_number to be sure
     # our events were processed
-    utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
+    test_utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
 
     # Apibara's chain-aware storage adds _chain.valid_to and _chain.valid_from
     # to every document, current documents have _chain.valid_to: null
@@ -262,7 +261,7 @@ async def test_guild_kick_added(
     mongo_db = mongo_client[indexer.id]
     # Wait for the indexer to reach the transaction block_number to be sure
     # our events were processed
-    utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
+    test_utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
 
     # Apibara's chain-aware storage adds _chain.valid_to and _chain.valid_from
     # to every document, current documents have _chain.valid_to: null
@@ -324,7 +323,7 @@ async def test_whitelist_added(
     mongo_db = mongo_client[indexer.id]
     # Wait for the indexer to reach the transaction block_number to be sure
     # our events were processed
-    utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
+    test_utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
 
     # Apibara's chain-aware storage adds _chain.valid_to and _chain.valid_from
     # to every document, current documents have _chain.valid_to: null
@@ -387,7 +386,7 @@ async def test_unwhitelist_added(
     mongo_db = mongo_client[indexer.id]
     # Wait for the indexer to reach the transaction block_number to be sure
     # our events were processed
-    utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
+    test_utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
 
     # Apibara's chain-aware storage adds _chain.valid_to and _chain.valid_from
     # to every document, current documents have _chain.valid_to: null
@@ -402,3 +401,62 @@ async def test_unwhitelist_added(
     assert proposal["type"] == "UnWhitelist"
     assert proposal["tokenName"] == tokenName
     assert proposal["tokenAddress"] == utils.int_to_bytes(tokenAddress)
+
+
+@pytest.mark.parametrize(
+    "status", [ProposalRawStatus.APPROVED.value, ProposalRawStatus.REJECTED.value]
+)
+async def test_status_updated(
+    status,
+    run_indexer_process: IndexerProcessRunner,
+    contract: Contract,
+    contract_events: dict,
+    client: AccountClient,
+    mongo_client: pymongo.MongoClient,
+):
+    filters = [
+        EventFilter.from_event_name(
+            name="ProposalAdded",
+            address=contract.address,
+        ),
+        EventFilter.from_event_name(
+            name="ProposalParamsUpdated",
+            address=contract.address,
+        ),
+        EventFilter.from_event_name(
+            name="ProposalStatusUpdated",
+            address=contract.address,
+        ),
+    ]
+
+    indexer = run_indexer_process(filters, default_new_events_handler)
+
+    proposal_id = 0
+
+    transaction_receipt = await test_proposals.test_status_updated(
+        contract=contract,
+        contract_events=contract_events,
+        client=client,
+        status=status,
+    )
+    block = await client.get_block(transaction_receipt.block_hash)
+    block_datetime = utils.get_block_datetime_utc(block)
+
+    mongo_db = mongo_client[indexer.id]
+    # Wait for the indexer to reach the transaction block_number to be sure
+    # our events were processed
+    test_utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
+
+    # Apibara's chain-aware storage adds _chain.valid_to and _chain.valid_from
+    # to every document, current documents have _chain.valid_to: null
+    proposals = list(mongo_db["proposals"].find({"_chain.valid_to": None}))
+    assert len(proposals) == 1
+
+    proposal = proposals[0]
+
+    assert proposal["id"] == proposal_id
+    assert proposal["rawStatus"] == status
+    assert proposal["rawStatusHistory"] == [
+        [ProposalRawStatus.SUBMITTED.value, proposal["submittedAt"]],
+        [status, block_datetime],
+    ]

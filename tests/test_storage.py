@@ -1,9 +1,10 @@
 from datetime import timedelta
 from unittest.mock import Mock
+
 from pymongo import MongoClient
 from pytest import MonkeyPatch
 
-from indexer import utils, storage
+from indexer import storage, utils
 
 from .data import data
 

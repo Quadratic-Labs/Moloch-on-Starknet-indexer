@@ -1,18 +1,13 @@
-from dataclasses import asdict
-from datetime import datetime
 import logging
 from typing import Any, Callable, Coroutine, Type
-from apibara.model import EventFilter, NewEvents, BlockHeader, StarkNetEvent
-from apibara.indexer.runner import IndexerRunner, Info
-from apibara.indexer import IndexerRunnerConfiguration
-from starknet_py.contract import identifier_manager_from_abi
-from starknet_py.utils.data_transformer.data_transformer import DataTransformer
-from starknet_py.net.gateway_client import GatewayClient
 
+from apibara.indexer import IndexerRunnerConfiguration
+from apibara.indexer.runner import IndexerRunner, Info
+from apibara.model import BlockHeader, EventFilter, NewEvents, StarkNetEvent
+from starknet_py.net.gateway_client import GatewayClient
 
 from . import config, events
 from .deserializer import deserialize_starknet_event
-
 
 EventHandler = Callable[[Info, BlockHeader, StarkNetEvent], Coroutine[Any, Any, None]]
 

@@ -1,9 +1,12 @@
+import pytest
 from starknet_py.contract import Contract
 from starknet_py.net.account.account_client import AccountClient
 from starknet_py.utils.data_transformer.data_transformer import CairoSerializer
 
+from indexer import utils
+from indexer.models import ProposalRawStatus
 
-from .. import constants, utils
+from .. import constants
 
 
 async def test_signaling(
@@ -334,5 +337,66 @@ async def test_unwhitelist(
     assert python_data.id == 0
     assert python_data.tokenName == utils.str_to_felt(tokenName)
     assert python_data.tokenAddress == tokenAddress
+
+    return transaction_receipt
+
+
+@pytest.mark.parametrize(
+    "status", [ProposalRawStatus.APPROVED.value, ProposalRawStatus.REJECTED.value]
+)
+async def test_status_updated(
+    status,
+    contract: Contract,
+    contract_events: dict,
+    client: AccountClient,
+    title="Signaling event",
+    link="Signaling event link",
+):
+    proposal_id = 0
+
+    await test_signaling(
+        contract=contract,
+        contract_events=contract_events,
+        client=client,
+        title=title,
+        link=link,
+    )
+
+    invoke_result = await contract.functions["Proposal_update_status_proxy"].invoke(
+        id=proposal_id,
+        status=utils.str_to_felt(status),
+        max_fee=10**16,
+    )
+    await invoke_result.wait_for_acceptance()
+
+    transaction_hash = invoke_result.hash
+    transaction_receipt = await client.get_transaction_receipt(transaction_hash)
+
+    # Takes events emitted by our contract from transaction receipt
+    events = [
+        event
+        for event in transaction_receipt.events
+        if event.from_address == contract.address
+    ]
+
+    # Takes an abi of the event which data we want to serialize
+    # We can get it from the contract abi
+    event_abi = contract_events["ProposalStatusUpdated"]
+
+    # The first event is ProposalAdded, the second is SwapProposalAdded
+    event_data = events[0].data
+
+    # Creates CairoSerializer with contract's identifier manager
+    cairo_serializer = CairoSerializer(
+        identifier_manager=contract.data.identifier_manager
+    )
+
+    # Transforms cairo data to python (needs types of the values and values)
+    python_data = cairo_serializer.to_python(
+        value_types=event_abi["data"], values=event_data
+    )
+
+    assert python_data.id == proposal_id
+    assert python_data.status == utils.str_to_felt(status)
 
     return transaction_receipt

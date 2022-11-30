@@ -1,17 +1,16 @@
 import asyncio
 import logging
 from datetime import datetime, timedelta
-from typing import Any, List, NewType, Optional, Type
+from typing import List, NewType, Optional, Type
 
 import strawberry
 from aiohttp import web
 from pymongo import MongoClient
-from pymongo.database import Database
 from strawberry.aiohttp.views import GraphQLView
 from strawberry.types import Info
 
+from . import storage, utils
 from .models import ProposalRawStatus, ProposalStatus
-from . import utils, storage
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -54,8 +53,8 @@ class Proposal:
     # private fields are not exposed to the GraphQL API
     yesVotersMembers: strawberry.Private[list[dict]]
     noVotersMembers: strawberry.Private[list[dict]]
-    rawStatus: strawberry.Private[int]
-    rawStatusHistory: strawberry.Private[list[tuple[int, datetime]]]
+    rawStatus: strawberry.Private[str]
+    rawStatusHistory: strawberry.Private[list[tuple[str, datetime]]]
 
     @strawberry.field
     def votingPeriodEndingAt(self) -> datetime:
@@ -78,7 +77,7 @@ class Proposal:
     @strawberry.field
     def approvedAt(self, info: Info) -> Optional[datetime]:
         if self.status(info) is ProposalStatus.APPROVED:
-            return self._get_raw_status_time(ProposalRawStatus.ACCEPTED)
+            return self._get_raw_status_time(ProposalRawStatus.APPROVED)
 
     @strawberry.field
     def rejectedAt(self, info: Info) -> Optional[datetime]:
@@ -170,7 +169,7 @@ class Proposal:
     def status(self, info: Info) -> ProposalStatus:
         raw_status = ProposalRawStatus(self.rawStatus)
 
-        if raw_status is ProposalRawStatus.ACCEPTED:
+        if raw_status is ProposalRawStatus.APPROVED:
             return ProposalStatus.APPROVED
 
         if raw_status is ProposalRawStatus.REJECTED:

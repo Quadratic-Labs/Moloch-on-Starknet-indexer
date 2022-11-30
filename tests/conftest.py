@@ -4,32 +4,33 @@ from dataclasses import dataclass
 from datetime import datetime
 from multiprocessing import Process
 from pathlib import Path
-from typing import Callable, Optional, Any
-from pytest import MonkeyPatch
+from typing import Any, Callable, Optional
 
+import mongomock
 import pymongo
 import pytest
 import requests
-import mongomock
 from apibara import EventFilter
+from pytest import MonkeyPatch
 from python_on_whales import Container
+from starknet_py.compile.compiler import Compiler
 from starknet_py.contract import Contract
 from starknet_py.net.account.account_client import AccountClient
 from starknet_py.net.gateway_client import GatewayClient
 from starknet_py.net.models import StarknetChainId
 from starknet_py.net.signer.stark_curve_signer import KeyPair
-from starknet_py.compile.compiler import Compiler
 
-from indexer.indexer import run_indexer
 from indexer.graphql import run_graphql
-from .integration.utils import (
+from indexer.indexer import run_indexer
+
+from . import config
+from .integration.test_utils import (
+    default_new_events_handler_test,
     docker,
     wait_for_apibara,
     wait_for_devnet,
     wait_for_docker_services,
-    default_new_events_handler_test,
 )
-from . import config
 
 
 @dataclass

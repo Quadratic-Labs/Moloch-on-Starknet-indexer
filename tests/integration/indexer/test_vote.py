@@ -4,12 +4,12 @@ from apibara import EventFilter
 from starknet_py.contract import Contract
 from starknet_py.net.account.account_client import AccountClient
 
+from indexer import utils
 from indexer.indexer import default_new_events_handler
 from indexer.models import ProposalRawStatus
-from indexer.utils import get_block_datetime_utc
 
 from ...conftest import IndexerProcessRunner
-from .. import utils
+from .. import test_utils
 from ..events import test_vote
 
 
@@ -51,12 +51,12 @@ async def test_vote_submitted(
         link=link,
     )
     proposal_block = await client.get_block(proposal_transaction_receipt.block_hash)
-    proposal_block_datetime = get_block_datetime_utc(proposal_block)
+    proposal_block_datetime = utils.get_block_datetime_utc(proposal_block)
 
     mongo_db = mongo_client[indexer.id]
     # Wait for the indexer to reach the transaction block_number to be sure
     # our events were processed
-    utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
+    test_utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
 
     proposals = list(mongo_db["proposals"].find({"_chain.valid_to": None}))
     assert len(proposals) == 1

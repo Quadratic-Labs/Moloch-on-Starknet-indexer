@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Callable, Type, Union
 
 from apibara import Info
@@ -7,13 +7,13 @@ from apibara.model import BlockHeader, StarkNetEvent
 from starknet_py.utils.data_transformer.data_transformer import CairoSerializer
 
 from .utils import (
-    function_accepts,
-    int_to_bytes,
     felt_to_str,
-    get_contract,
-    get_contract_events,
+    function_accepts,
     get_block,
     get_block_datetime_utc,
+    get_contract,
+    get_contract_events,
+    int_to_bytes,
 )
 
 

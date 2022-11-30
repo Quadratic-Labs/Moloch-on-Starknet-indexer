@@ -1,24 +1,15 @@
-from enum import IntEnum, Enum
+from enum import Enum
 
 import strawberry
 
 
-class ProposalRawStatus(IntEnum):
-    SUBMITTED = 1
-    ACCEPTED = 2
+class ProposalRawStatus(Enum):
+    SUBMITTED = "submitted"
+    APPROVED = "approved"
     # Can proceed to execution if any actions
-    REJECTED = 3
-
-    FORCED = 7
+    REJECTED = "rejected"
     # Sent directly to grace period by admin
-    # The remaining states are final
-    ABORTED = 4
-    # Did not go completely through voting
-    EXECUTED = 5
-    # Execution is finalised and successful
-    FAILED = 6
-    # Execution failed
-    NOTFOUND = -1
+    FORCED = "forced"
 
 
 @strawberry.enum
