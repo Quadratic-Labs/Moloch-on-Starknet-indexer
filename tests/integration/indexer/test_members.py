@@ -59,15 +59,19 @@ async def test_member_updated(
     client: AccountClient,
     mongo_client: pymongo.MongoClient,
     address=0x363B71D002935E7822EC0B1BAF02EE90D64F3458939B470E3E629390436510B,
-    delegateAddress=35555,
+    delegateAddress=0x363B71D002935E7822EC0B1BAF02EE90D64F3458939B470E3E629390436510B,
     shares=42,
     loot=42,
     jailed=0,
     lastProposalYesVote=3,
-    onboardedAt=86348726,
+    onboardedAt=2,
 ):
 
     filters = [
+        EventFilter.from_event_name(
+            name="MemberAdded",
+            address=contract.address,
+        ),
         EventFilter.from_event_name(
             name="MemberUpdated",
             address=contract.address,
@@ -89,6 +93,9 @@ async def test_member_updated(
         onboardedAt=onboardedAt,
     )
 
+    onboarded_at_block = await client.get_block(block_number=onboardedAt)
+    onboarded_at_block_timestamp = get_block_datetime_utc(onboarded_at_block)
+
     mongo_db = mongo_client[indexer.id]
     # Wait for the indexer to reach the transaction block_number to be sure
     # our events were processed
@@ -99,9 +106,9 @@ async def test_member_updated(
 
     member = members[0]
 
-    assert member["memberAddress"] == address
-    assert member["delegateAddress"] == delegateAddress
+    assert member["memberAddress"] == utils.int_to_bytes(address)
+    assert member["delegateAddress"] == utils.int_to_bytes(delegateAddress)
     assert member["shares"] == shares
     assert member["jailed"] == jailed
     assert member["loot"] == loot
-    assert member["onboardedAt"] == onboardedAt
+    assert member["onboardedAt"] == onboarded_at_block_timestamp

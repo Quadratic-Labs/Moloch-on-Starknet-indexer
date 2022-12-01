@@ -284,7 +284,6 @@ class MemberAdded(Event):
     shares: int
     loot: int
     onboardedAt: BlockNumber
-    lastProposalYesVote: int
 
     async def _handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
@@ -301,7 +300,7 @@ async def update_member(
 ):
     logger.debug("Updating member %s with %s", memberAddress, document)
     existing = await info.storage.find_one_and_update(
-        filter={"memberAdress": memberAddress},
+        filter={"memberAddress": memberAddress},
         collection="members",
         update={"$set": document},
     )
