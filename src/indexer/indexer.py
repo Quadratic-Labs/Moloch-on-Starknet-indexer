@@ -1,8 +1,8 @@
 import logging
 from typing import Any, Callable, Coroutine, Type
 
+from apibara import IndexerRunner, Info
 from apibara.indexer import IndexerRunnerConfiguration
-from apibara.indexer.runner import IndexerRunner, Info
 from apibara.model import BlockHeader, EventFilter, NewEvents, StarkNetEvent
 from starknet_py.net.gateway_client import GatewayClient
 
