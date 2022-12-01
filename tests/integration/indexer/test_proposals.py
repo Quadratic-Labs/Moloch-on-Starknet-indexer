@@ -1,3 +1,4 @@
+# pylint: disable=too-many-arguments,too-many-locals
 import pymongo
 import pytest
 from apibara import EventFilter

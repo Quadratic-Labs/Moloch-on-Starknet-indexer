@@ -1,3 +1,4 @@
+# pylint: disable=line-too-long
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
@@ -46,7 +47,10 @@ ADDRESSES: list[Address] = [
     Address(
         integer=0x04AD3B428ACE200BCBCC7C5412A869AFCD783E0A20B1BE9A84D1CD1BD734563B,
         string="0x04ad3b428ace200bcbcc7c5412a869afcd783e0a20b1be9a84d1cd1bd734563b",
-        bytes=b"\x04\xad;B\x8a\xce \x0b\xcb\xcc|T\x12\xa8i\xaf\xcdx>\n \xb1\xbe\x9a\x84\xd1\xcd\x1b\xd74V;",
+        bytes=(
+            b"\x04\xad;B\x8a\xce \x0b\xcb\xcc|T\x12\xa8i\xaf\xcdx>\n"
+            b" \xb1\xbe\x9a\x84\xd1\xcd\x1b\xd74V;"
+        ),
     ),
     Address(
         integer=0x00F1102779415ADA31E259CB97D2163FE0FCAA70BD82483A4AA0E3AB11AF4DE2,

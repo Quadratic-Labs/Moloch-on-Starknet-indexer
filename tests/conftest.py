@@ -1,3 +1,4 @@
+# pylint: disable=redefined-outer-name,unused-argument
 import asyncio
 import os
 from dataclasses import dataclass
@@ -60,8 +61,10 @@ class Account:
     public_key: int
 
 
-# We have to override the default event_loop to be able to write async fixtures with a session scope
-# TODO: think about using a different event_loop instead of overriding as suggested by the asyncio-pytest docs
+# We have to override the default event_loop to be able to write async fixtures
+# with a session scope
+# TODO: think about using a different event_loop instead of overriding as
+# suggested by the asyncio-pytest docs
 @pytest.fixture(scope="session")
 def event_loop():
     policy = asyncio.get_event_loop_policy()
@@ -95,7 +98,7 @@ async def docker_compose_services(request: pytest.FixtureRequest) -> list[Contai
 @pytest.fixture(scope="session")
 def predeployed_accounts() -> list[Account]:
     url = os.path.join(config.STARKNET_NETWORK_URL, "predeployed_accounts")
-    predeployed_accounts = requests.get(url, timeout=5).json()
+    accounts = requests.get(url, timeout=5).json()
 
     return [
         Account(
@@ -103,7 +106,7 @@ def predeployed_accounts() -> list[Account]:
             private_key=int(account["private_key"], 16),
             public_key=int(account["public_key"], 16),
         )
-        for account in predeployed_accounts
+        for account in accounts
     ]
 
 

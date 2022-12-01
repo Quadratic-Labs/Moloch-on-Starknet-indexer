@@ -20,5 +20,8 @@
     ],
     "python.linting.pylintArgs": [
         "--disable=invalid-name"
+    ],
+    "black-formatter.args": [
+        "--preview"
     ]
 }

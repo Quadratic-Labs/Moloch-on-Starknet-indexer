@@ -1,3 +1,4 @@
+# pylint: disable=too-many-arguments,too-many-locals
 import pymongo
 import pytest
 from apibara import EventFilter
@@ -13,6 +14,7 @@ from .. import test_utils
 from ..events import test_vote
 
 
+# pylint: disable=duplicate-code
 @pytest.mark.parametrize("vote", [0, 1])
 async def test_vote_submitted(
     vote,

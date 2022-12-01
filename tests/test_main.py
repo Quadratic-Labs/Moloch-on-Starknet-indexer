@@ -11,7 +11,8 @@ from . import config
 
 
 def test_start_indexer_error(caplog: LogCaptureFixture):
-    # Workaround a Click testing bug, see https://github.com/pallets/click/issues/824#issuecomment-562581313
+    # Workaround a Click testing bug
+    # see https://github.com/pallets/click/issues/824#issuecomment-562581313
     caplog.set_level(10000)
 
     runner = CliRunner()
@@ -21,7 +22,8 @@ def test_start_indexer_error(caplog: LogCaptureFixture):
 
 
 def test_start_indexer(monkeypatch: MonkeyPatch, caplog: LogCaptureFixture):
-    # Workaround a Click testing bug, see https://github.com/pallets/click/issues/824#issuecomment-562581313
+    # Workaround a Click testing bug
+    # See https://github.com/pallets/click/issues/824#issuecomment-562581313
     caplog.set_level(10000)
 
     runner = CliRunner()
@@ -74,7 +76,8 @@ def test_start_indexer(monkeypatch: MonkeyPatch, caplog: LogCaptureFixture):
 
 
 def test_start_graphql_error(caplog: LogCaptureFixture):
-    # Workaround a Click testing bug, see https://github.com/pallets/click/issues/824#issuecomment-562581313
+    # Workaround a Click testing bug
+    # See https://github.com/pallets/click/issues/824#issuecomment-562581313
     caplog.set_level(10000)
 
     runner = CliRunner()
@@ -84,7 +87,8 @@ def test_start_graphql_error(caplog: LogCaptureFixture):
 
 
 def test_start_graphql(monkeypatch: MonkeyPatch, caplog: LogCaptureFixture):
-    # Workaround a Click testing bug, see https://github.com/pallets/click/issues/824#issuecomment-562581313
+    # Workaround a Click testing bug
+    # See https://github.com/pallets/click/issues/824#issuecomment-562581313
     caplog.set_level(10000)
 
     runner = CliRunner()

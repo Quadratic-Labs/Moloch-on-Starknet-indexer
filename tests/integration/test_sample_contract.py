@@ -1,5 +1,20 @@
 """This module uses the sample contract tests/assets/sample_contract.cairo to make
 sure the integration tests environment is working as expected
+
+If this fails, that most probably means the environment is broken and other tests
+will fail for the same reason
+
+## Known environment issues:
+1. All indexer tests fail at len(proposals) == 1
+Some services are not functioning properly and the indexer is not able to receive
+anything, fix by taking down the docker services manually with the following command:
+
+```bash
+docker-compose -f docker-compose.test.yml -p indexer-test down
+```
+
+Note that theoretically this will only happen if you're passing `--keep-docker-services`
+argument to `pytest`
 """
 import json
 from pathlib import Path
@@ -15,7 +30,9 @@ from .test_utils import default_new_events_handler_test, wait_for_indexer
 
 
 async def test_contract_abi(sample_contract: Contract, sample_contract_file: Path):
-    with open(sample_contract_file.parent / "sample_contract_abi.json") as file:
+    with open(
+        sample_contract_file.parent / "sample_contract_abi.json", encoding="utf8"
+    ) as file:
         contract_abi = json.loads(file.read())
 
     assert sample_contract.data.abi == contract_abi

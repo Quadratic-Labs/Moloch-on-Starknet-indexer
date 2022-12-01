@@ -1,5 +1,5 @@
 """Apibara indexer entrypoint."""
-
+# pylint: disable=too-many-arguments,too-many-locals
 import asyncio
 from functools import wraps
 
@@ -58,7 +58,10 @@ def cli():
 )
 @click.option(
     "--events",
-    help="The list of the events to listen for, defaults to all events coming from the contract address.",
+    help=(
+        "The list of the events to listen for, defaults to all events coming from the"
+        " contract address."
+    ),
 )
 @async_command
 async def start_indexer(

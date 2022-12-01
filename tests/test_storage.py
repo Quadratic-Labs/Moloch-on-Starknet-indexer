@@ -2,7 +2,6 @@ from datetime import timedelta
 from unittest.mock import Mock
 
 from pymongo import MongoClient
-from pytest import MonkeyPatch
 
 from indexer import storage, utils
 
@@ -14,7 +13,7 @@ def test_list_members(mongomock_client: MongoClient):
 
     members = storage.list_members(info)
 
-    assert list(members) == []
+    assert not list(members)
 
     new_members = [
         {"memberAddress": "0x1"},
@@ -64,7 +63,7 @@ def test_list_votable_members(mongomock_client: MongoClient):
         submitted_at=submitted_at,
     )
 
-    assert list(members) == []
+    assert not list(members)
 
     new_members = [
         {"memberAddress": "0x1", "onboardedAt": submitted_at},
@@ -281,7 +280,7 @@ def test_list_votable_members_jailed_at_and_exited_at(mongomock_client: MongoCli
     assert list(members) == votable_members
 
 
-def test_list_proposals(mongomock_client: MongoClient, monkeypatch: MonkeyPatch):
+def test_list_proposals(mongomock_client: MongoClient):
     info = Mock(context={"db": mongomock_client.db})
 
     mongomock_client.db.proposals.insert_many(data.PROPOSALS)

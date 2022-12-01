@@ -45,6 +45,7 @@ async def default_new_events_handler(
             logger.error("Cannot find event class for %s", starknet_event)
 
 
+# pylint: disable=too-many-arguments
 async def run_indexer(
     server_url,
     mongo_url,
@@ -55,9 +56,9 @@ async def run_indexer(
     indexer_id: str = config.INDEXER_ID,
     new_events_handler=default_new_events_handler,
 ):
-
     logger.info(
-        "Starting the indexer with server_url=%s, mongo_url=%s, starknet_network_url=%s, indexer_id=%s, restart=%s, ssl=%s, filters=%s",
+        "Starting the indexer with server_url=%s, mongo_url=%s,"
+        " starknet_network_url=%s, indexer_id=%s, restart=%s, ssl=%s, filters=%s",
         server_url,
         mongo_url,
         starknet_network_url,

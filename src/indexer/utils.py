@@ -14,7 +14,8 @@ from starknet_py.net.gateway_client import GatewayClient
 def str_to_felt(text: str) -> int:
     if len(text) > 31:
         raise ValueError(
-            f"Cannot convert '{text}' to felt because it has more than 31 chars ({len(text)})"
+            f"Cannot convert '{text}' to felt because it has more than 31 chars"
+            f" ({len(text)})"
         )
     b_text = bytes(text, "ascii")
     return int.from_bytes(b_text, "big")
@@ -105,12 +106,14 @@ async def get_block(block_number: int, client: GatewayClient) -> GatewayBlock:
 def get_block_datetime_utc(block: Union[GatewayBlock, BlockHeader]) -> datetime:
     if isinstance(block, GatewayBlock):
         return datetime.fromtimestamp(block.timestamp, timezone.utc)
-    elif isinstance(block, BlockHeader):
+
+    if isinstance(block, BlockHeader):
         return block.timestamp.replace(tzinfo=timezone.utc)
-    else:
-        raise ValueError(
-            f"block should be either GatewayBlock or BlockHeader, got {block} of type {type(block)}"
-        )
+
+    raise ValueError(
+        f"block should be either GatewayBlock or BlockHeader, got {block} of type"
+        f" {type(block)}"
+    )
 
 
 @lru_cache(maxsize=128)
@@ -142,7 +145,7 @@ def function_accepts(func: Callable, argnames: Iterable) -> bool:
     Returns:
         bool: whether the function accepts the arguments or not
     """
-    return all([argname in func.__code__.co_varnames for argname in argnames])
+    return all(argname in func.__code__.co_varnames for argname in argnames)
 
 
 def all_annotations(cls) -> ChainMap:

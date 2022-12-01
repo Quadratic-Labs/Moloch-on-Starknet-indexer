@@ -21,6 +21,7 @@ class BlockNumber(int):
     pass
 
 
+# pylint: disable=unused-argument
 async def deserialize_block_number(
     block_number: BlockNumber,
     info: Info,
@@ -51,6 +52,7 @@ deserializers: dict[Type, Serializer] = {
 }
 
 
+# pylint: disable=too-many-locals
 async def deserialize_starknet_event(
     fields: dict[str, Type],
     info: Info,
@@ -76,7 +78,8 @@ async def deserialize_starknet_event(
         values=event_data,
     )
 
-    # TODO: validate the matching between the fields and their types in python_data and __annotations__
+    # TODO: validate the matching between the fields and their types
+    # in python_data and __annotations__
     kwargs = {}
     for name, field_type in fields.items():
         if deserializer := deserializers.get(field_type):

@@ -1,3 +1,4 @@
+# pylint: disable=too-many-arguments,too-many-locals
 import pytest
 from starknet_py.contract import Contract
 from starknet_py.net.account.account_client import AccountClient
@@ -44,8 +45,6 @@ async def test_vote(
     # Takes an abi of the event which data we want to serialize
     # We can get it from the contract abi
     emitted_event_abi = contract_events["VoteSubmitted"]
-
-    # ProposalAdded.emit(id=info.id, title=info.title, link=info.link, type=info.type, submittedBy=info.submittedBy, submittedAt=info.submittedAt);
 
     # Creates CairoSerializer with contract's identifier manager
     cairo_serializer = CairoSerializer(
