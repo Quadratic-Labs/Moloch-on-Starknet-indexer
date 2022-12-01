@@ -13,7 +13,7 @@ async def test_member_added(
     address=0x363B71D0029390D64F3458939B470E3E6293904D36510B,
     delegateAddress=0x363B71D0029390D64F3458939B470E3E6293904D36510B,
     shares=69,
-    loot=69,
+    loot=66,
     jailed=0,
     lastProposalYesVote=0,
     onboardedAt=8638726,
