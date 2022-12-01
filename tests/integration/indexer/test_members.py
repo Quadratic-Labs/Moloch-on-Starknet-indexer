@@ -1,12 +1,17 @@
+import pytest
 import pymongo
 from apibara import EventFilter
 from starknet_py.contract import Contract
 from starknet_py.net.account.account_client import AccountClient
 
 
-from ...conftest import IndexerProcessRunner
-from .. import utils
+from ..events import test_members
+
+
+from ...conftest import Account, IndexerProcessRunner
+from .. import constants, utils
 from indexer.indexer import default_new_events_handler
+from indexer.models import ProposalRawStatus
 from indexer.utils import get_block_datetime_utc
 
 
@@ -50,9 +55,18 @@ async def test_member_added(
 async def test_member_updated(
     run_indexer_process: IndexerProcessRunner,
     contract: Contract,
+    contract_events: dict,
     client: AccountClient,
     mongo_client: pymongo.MongoClient,
+    address=0x363B71D002935E7822EC0B1BAF02EE90D64F3458939B470E3E629390436510B,
+    delegateAddress=35555,
+    shares=42,
+    loot=42,
+    jailed=0,
+    lastProposalYesVote=3,
+    onboardedAt=86348726,
 ):
+
     filters = [
         EventFilter.from_event_name(
             name="MemberUpdated",
@@ -62,13 +76,32 @@ async def test_member_updated(
 
     indexer = run_indexer_process(filters, default_new_events_handler)
 
-    mongo_db = mongo_client[indexer.id]
+    transaction_receipt = await test_members.test_member_updated(
+        contract=contract,
+        contract_events=contract_events,
+        client=client,
+        address=address,
+        delegateAddress=delegateAddress,
+        shares=shares,
+        loot=loot,
+        jailed=jailed,
+        lastProposalYesVote=lastProposalYesVote,
+        onboardedAt=onboardedAt,
+    )
 
+    mongo_db = mongo_client[indexer.id]
     # Wait for the indexer to reach the transaction block_number to be sure
     # our events were processed
-    block = await client.get_block("latest")
-    utils.wait_for_indexer(mongo_db, block.block_number)
-
-    block_datetime = get_block_datetime_utc(block)
+    utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
 
     members = list(mongo_db["members"].find({"_chain.valid_to": None}))
+    assert len(members) == 1
+
+    member = members[0]
+
+    assert member["memberAddress"] == address
+    assert member["delegateAddress"] == delegateAddress
+    assert member["shares"] == shares
+    assert member["jailed"] == jailed
+    assert member["loot"] == loot
+    assert member["onboardedAt"] == onboardedAt
