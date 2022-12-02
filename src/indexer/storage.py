@@ -1,6 +1,7 @@
-from datetime import datetime
 import os
+from datetime import datetime
 from typing import Any, Optional
+
 from pymongo.database import Database
 from strawberry.types import Info
 
@@ -18,7 +19,6 @@ def list_members(info: Info, query=None):
 def get_votable_members_query(
     voting_period_ending_at: datetime, submitted_at: datetime
 ):
-
     # if (
     #     onboardedAt <= votingPeriodEndingAt
     #     and (jailedAt is None or jailedAt > submittedAt)
@@ -65,7 +65,8 @@ def get_list_proposals_query(
 
     # TODO: use $set with MongoDB Expressions[1] to add fields we need for sorting
     # like timeRemaining and processedAt
-    # [1]: https://www.mongodb.com/docs/manual/meta/aggregation-quick-reference/#std-label-aggregation-expressions
+    # [1]: https://www.mongodb.com/docs/manual/meta/aggregation-quick-reference
+    # /#std-label-aggregation-expressions
     pipeline: list[dict[str, Any]] = [
         {"$match": current_block_filter},
         {"$skip": skip},

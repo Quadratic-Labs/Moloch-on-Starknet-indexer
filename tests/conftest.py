@@ -1,35 +1,37 @@
+# pylint: disable=redefined-outer-name,unused-argument
 import asyncio
 import os
 from dataclasses import dataclass
 from datetime import datetime
 from multiprocessing import Process
 from pathlib import Path
-from typing import Callable, Optional, Any
-from pytest import MonkeyPatch
+from typing import Any, Callable, Optional
 
+import mongomock
 import pymongo
 import pytest
 import requests
-import mongomock
 from apibara import EventFilter
+from pytest import MonkeyPatch
 from python_on_whales import Container
+from starknet_py.compile.compiler import Compiler
 from starknet_py.contract import Contract
 from starknet_py.net.account.account_client import AccountClient
 from starknet_py.net.gateway_client import GatewayClient
 from starknet_py.net.models import StarknetChainId
 from starknet_py.net.signer.stark_curve_signer import KeyPair
-from starknet_py.compile.compiler import Compiler
 
-from indexer.indexer import run_indexer
 from indexer.graphql import run_graphql
-from .integration.utils import (
+from indexer.indexer import run_indexer
+
+from . import config
+from .integration.test_utils import (
+    default_new_events_handler_test,
     docker,
     wait_for_apibara,
     wait_for_devnet,
     wait_for_docker_services,
-    default_new_events_handler_test,
 )
-from . import config
 
 
 @dataclass
@@ -59,8 +61,10 @@ class Account:
     public_key: int
 
 
-# We have to override the default event_loop to be able to write async fixtures with a session scope
-# TODO: think about using a different event_loop instead of overriding as suggested by the asyncio-pytest docs
+# We have to override the default event_loop to be able to write async fixtures
+# with a session scope
+# TODO: think about using a different event_loop instead of overriding as
+# suggested by the asyncio-pytest docs
 @pytest.fixture(scope="session")
 def event_loop():
     policy = asyncio.get_event_loop_policy()
@@ -94,7 +98,7 @@ async def docker_compose_services(request: pytest.FixtureRequest) -> list[Contai
 @pytest.fixture(scope="session")
 def predeployed_accounts() -> list[Account]:
     url = os.path.join(config.STARKNET_NETWORK_URL, "predeployed_accounts")
-    predeployed_accounts = requests.get(url, timeout=5).json()
+    accounts = requests.get(url, timeout=5).json()
 
     return [
         Account(
@@ -102,7 +106,7 @@ def predeployed_accounts() -> list[Account]:
             private_key=int(account["private_key"], 16),
             public_key=int(account["public_key"], 16),
         )
-        for account in predeployed_accounts
+        for account in accounts
     ]
 
 

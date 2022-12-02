@@ -1,18 +1,15 @@
-import pytest
+# pylint: disable=too-many-arguments,too-many-locals
 import pymongo
 from apibara import EventFilter
 from starknet_py.contract import Contract
 from starknet_py.net.account.account_client import AccountClient
 
-
-from ..events import test_members
-
-
-from ...conftest import Account, IndexerProcessRunner
-from .. import constants, utils
+from indexer import utils
 from indexer.indexer import default_new_events_handler
-from indexer.models import ProposalRawStatus
-from indexer.utils import get_block_datetime_utc
+
+from ...conftest import IndexerProcessRunner
+from .. import test_utils
+from ..events import test_members
 
 
 # We're adding the first predeployed account in devnet manually in main.cairo
@@ -37,9 +34,9 @@ async def test_member_added(
     # Wait for the indexer to reach the transaction block_number to be sure
     # our events were processed
     block = await client.get_block("latest")
-    utils.wait_for_indexer(mongo_db, block.block_number)
+    test_utils.wait_for_indexer(mongo_db, block.block_number)
 
-    block_datetime = get_block_datetime_utc(block)
+    block_datetime = utils.get_block_datetime_utc(block)
 
     members = list(mongo_db["members"].find({"_chain.valid_to": None}))
     assert len(members) == 1
@@ -66,7 +63,6 @@ async def test_member_updated(
     lastProposalYesVote=3,
     onboardedAt=2,
 ):
-
     filters = [
         EventFilter.from_event_name(
             name="MemberAdded",
@@ -94,12 +90,12 @@ async def test_member_updated(
     )
 
     onboarded_at_block = await client.get_block(block_number=onboardedAt)
-    onboarded_at_block_timestamp = get_block_datetime_utc(onboarded_at_block)
+    onboarded_at_block_timestamp = utils.get_block_datetime_utc(onboarded_at_block)
 
     mongo_db = mongo_client[indexer.id]
     # Wait for the indexer to reach the transaction block_number to be sure
     # our events were processed
-    utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
+    test_utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
 
     members = list(mongo_db["members"].find({"_chain.valid_to": None}))
     assert len(members) == 1

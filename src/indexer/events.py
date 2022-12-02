@@ -3,52 +3,49 @@ in instance from a `StarkNetEvent`, the from_starknet_event method uses the type
 given in the dataclass to know how to deserialize the values
 """
 
-from dataclasses import dataclass, asdict
 import logging
+from dataclasses import asdict, dataclass
 from typing import Type
 
 from apibara import Info
 from apibara.model import BlockHeader, StarkNetEvent
 
 from indexer.utils import get_block_datetime_utc
+
 from .deserializer import BlockNumber
 from .models import ProposalRawStatus
-
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class Event:
-    async def _write_to_events_collection(
-        self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
-    ):
+    async def _write_to_events_collection(self, info: Info):
         logger.debug("Inserting to 'events': %s", self)
         await info.storage.insert_one("events", asdict(self))
 
+    # pylint: disable=unused-argument
     async def _handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
-        logger.warning(f"No custom _handle implemented for {self.__class__.__name__}")
+        logger.warning("No custom _handle implemented for %s", self.__class__.__name__)
 
     async def handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
-        await self._write_to_events_collection(info, block, starknet_event)
+        await self._write_to_events_collection(info)
         await self._handle(info, block, starknet_event)
 
 
 async def update_proposal(
-    id: int,
+    proposal_id: int,
     document: dict,
     info: Info,
-    block: BlockHeader,
-    starknet_event: StarkNetEvent,
 ):
-    logger.debug("Updating proposal %s with %s", id, document)
+    logger.debug("Updating proposal %s with %s", proposal_id, document)
     existing = await info.storage.find_one_and_update(
         collection="proposals",
-        filter={"id": id},
+        filter={"id": proposal_id},
         update={"$set": document},
     )
     logger.debug("Existing proposal %s", existing)
@@ -86,9 +83,9 @@ class ProposalAdded(Event):
         if proposal_params is None:
             # TODO: find a better / more specific exception class
             raise Exception(
-                f"Cannot find proposal params(majority, quorum ...) for type"
+                "Cannot find proposal params(majority, quorum ...) for type"
                 f" '{self.type}' in 'proposal_params' collection, check if the"
-                f" indexer is handling ProposalParamsUpdated events"
+                " indexer is handling ProposalParamsUpdated events"
             )
 
         del proposal_params["_id"]
@@ -129,30 +126,25 @@ class OnboardProposalAdded(Event):
     async def _handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
-
         return await update_proposal(
-            id=self.id,
+            proposal_id=self.id,
             document=asdict(self),
             info=info,
-            block=block,
-            starknet_event=starknet_event,
         )
 
 
 @dataclass
 class ProposalStatusUpdated(Event):
     id: int
-    status: int
+    status: str
 
     async def _handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
         await update_proposal(
-            id=self.id,
+            proposal_id=self.id,
             document={"rawStatus": self.status},
             info=info,
-            block=block,
-            starknet_event=starknet_event,
         )
 
         await info.storage.find_one_and_update(
@@ -178,11 +170,9 @@ class GuildKickProposalAdded(Event):
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
         return await update_proposal(
-            id=self.id,
+            proposal_id=self.id,
             document=asdict(self),
             info=info,
-            block=block,
-            starknet_event=starknet_event,
         )
 
 
@@ -196,11 +186,9 @@ class WhitelistProposalAdded(Event):
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
         return await update_proposal(
-            id=self.id,
+            proposal_id=self.id,
             document=asdict(self),
             info=info,
-            block=block,
-            starknet_event=starknet_event,
         )
 
 
@@ -214,11 +202,9 @@ class UnWhitelistProposalAdded(Event):
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
         return await update_proposal(
-            id=self.id,
+            proposal_id=self.id,
             document=asdict(self),
             info=info,
-            block=block,
-            starknet_event=starknet_event,
         )
 
 
@@ -234,11 +220,9 @@ class SwapProposalAdded(Event):
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
         return await update_proposal(
-            id=self.id,
+            proposal_id=self.id,
             document=asdict(self),
             info=info,
-            block=block,
-            starknet_event=starknet_event,
         )
 
 
@@ -295,8 +279,6 @@ async def update_member(
     memberAddress: bytes,
     document: dict,
     info: Info,
-    block: BlockHeader,
-    starknet_event: StarkNetEvent,
 ):
     logger.debug("Updating member %s with %s", memberAddress, document)
     existing = await info.storage.find_one_and_update(
@@ -320,25 +302,22 @@ class MemberUpdated(Event):
     async def _handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
-
         return await update_member(
             memberAddress=self.memberAddress,
             document=asdict(self),
             info=info,
-            block=block,
-            starknet_event=starknet_event,
         )
 
 
 ALL_EVENTS: dict[str, Type[Event]] = {
-    "ProposalAdded": ProposalAdded,
-    "OnboardProposalAdded": OnboardProposalAdded,
     "ProposalStatusUpdated": ProposalStatusUpdated,
     "ProposalParamsUpdated": ProposalParamsUpdated,
-    "SwapProposalAdded": SwapProposalAdded,
+    "ProposalAdded": ProposalAdded,
+    "OnboardProposalAdded": OnboardProposalAdded,
     "GuildKickProposalAdded": GuildKickProposalAdded,
     "WhitelistProposalAdded": WhitelistProposalAdded,
     "UnWhitelistProposalAdded": UnWhitelistProposalAdded,
+    "SwapProposalAdded": SwapProposalAdded,
     "VoteSubmitted": VoteSubmitted,
     "MemberAdded": MemberAdded,
     "MemberUpdated": MemberUpdated,

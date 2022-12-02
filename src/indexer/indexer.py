@@ -1,18 +1,13 @@
-from dataclasses import asdict
-from datetime import datetime
 import logging
 from typing import Any, Callable, Coroutine, Type
-from apibara.model import EventFilter, NewEvents, BlockHeader, StarkNetEvent
-from apibara.indexer.runner import IndexerRunner, Info
-from apibara.indexer import IndexerRunnerConfiguration
-from starknet_py.contract import identifier_manager_from_abi
-from starknet_py.utils.data_transformer.data_transformer import DataTransformer
-from starknet_py.net.gateway_client import GatewayClient
 
+from apibara import IndexerRunner, Info
+from apibara.indexer import IndexerRunnerConfiguration
+from apibara.model import BlockHeader, EventFilter, NewEvents, StarkNetEvent
+from starknet_py.net.gateway_client import GatewayClient
 
 from . import config, events
 from .deserializer import deserialize_starknet_event
-
 
 EventHandler = Callable[[Info, BlockHeader, StarkNetEvent], Coroutine[Any, Any, None]]
 
@@ -50,6 +45,7 @@ async def default_new_events_handler(
             logger.error("Cannot find event class for %s", starknet_event)
 
 
+# pylint: disable=too-many-arguments
 async def run_indexer(
     server_url,
     mongo_url,
@@ -60,9 +56,9 @@ async def run_indexer(
     indexer_id: str = config.INDEXER_ID,
     new_events_handler=default_new_events_handler,
 ):
-
     logger.info(
-        "Starting the indexer with server_url=%s, mongo_url=%s, starknet_network_url=%s, indexer_id=%s, restart=%s, ssl=%s, filters=%s",
+        "Starting the indexer with server_url=%s, mongo_url=%s,"
+        " starknet_network_url=%s, indexer_id=%s, restart=%s, ssl=%s, filters=%s",
         server_url,
         mongo_url,
         starknet_network_url,

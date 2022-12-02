@@ -1,29 +1,28 @@
 import asyncio
 import logging
 from datetime import datetime, timedelta
-from typing import Any, List, NewType, Optional, Type
+from typing import List, NewType, Optional, Type
 
 import strawberry
 from aiohttp import web
 from pymongo import MongoClient
-from pymongo.database import Database
 from strawberry.aiohttp.views import GraphQLView
 from strawberry.types import Info
 
+from . import storage, utils
 from .models import ProposalRawStatus, ProposalStatus
-from . import utils, storage
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 
-def parse_hex(value):
+def parse_hex(value: str) -> bytes:
     if not value.startswith("0x"):
         raise ValueError("invalid Hex value")
     return bytes.fromhex(value.replace("0x", ""))
 
 
-def serialize_hex(token_id):
+def serialize_hex(token_id: bytes) -> str:
     return "0x" + token_id.hex()
 
 
@@ -54,8 +53,8 @@ class Proposal:
     # private fields are not exposed to the GraphQL API
     yesVotersMembers: strawberry.Private[list[dict]]
     noVotersMembers: strawberry.Private[list[dict]]
-    rawStatus: strawberry.Private[int]
-    rawStatusHistory: strawberry.Private[list[tuple[int, datetime]]]
+    rawStatus: strawberry.Private[str]
+    rawStatusHistory: strawberry.Private[list[tuple[str, datetime]]]
 
     @strawberry.field
     def votingPeriodEndingAt(self) -> datetime:
@@ -78,18 +77,18 @@ class Proposal:
     @strawberry.field
     def approvedAt(self, info: Info) -> Optional[datetime]:
         if self.status(info) is ProposalStatus.APPROVED:
-            return self._get_raw_status_time(ProposalRawStatus.ACCEPTED)
+            return self.get_raw_status_time(ProposalRawStatus.APPROVED)
 
     @strawberry.field
     def rejectedAt(self, info: Info) -> Optional[datetime]:
         if self.status(info) is ProposalStatus.REJECTED:
-            return self._get_raw_status_time(ProposalRawStatus.REJECTED)
+            return self.get_raw_status_time(ProposalRawStatus.REJECTED)
 
     @strawberry.field
     def processedAt(self, info: Info) -> Optional[datetime]:
         return self.approvedAt(info) or self.rejectedAt(info) or None
 
-    def _get_raw_status_time(self, status: ProposalRawStatus) -> Optional[datetime]:
+    def get_raw_status_time(self, status: ProposalRawStatus) -> Optional[datetime]:
         for status_, time_ in self.rawStatusHistory:
             if ProposalRawStatus(status_) is status:
                 return time_
@@ -100,11 +99,11 @@ class Proposal:
 
     @strawberry.field
     def yesVotesTotal(self) -> int:
-        return sum([member["shares"] for member in self.yesVotersMembers])
+        return sum(member["shares"] for member in self.yesVotersMembers)
 
     @strawberry.field
     def noVotesTotal(self) -> int:
-        return sum([member["shares"] for member in self.noVotersMembers])
+        return sum(member["shares"] for member in self.noVotersMembers)
 
     @strawberry.field
     def totalVotableShares(self, info: Info) -> int:
@@ -113,7 +112,7 @@ class Proposal:
             voting_period_ending_at=self.votingPeriodEndingAt(),
             submitted_at=self.submittedAt,
         )
-        return sum([member["shares"] for member in members])
+        return sum(member["shares"] for member in members)
 
     @strawberry.field
     def currentMajority(self) -> float:
@@ -161,16 +160,16 @@ class Proposal:
         ):
             if now < self.gracePeriodEndingAt():
                 return ProposalStatus.GRACE_PERIOD
-            else:
-                return ProposalStatus.APPROVED_READY
-        else:
-            return ProposalStatus.REJECTED_READY
+
+            return ProposalStatus.APPROVED_READY
+
+        return ProposalStatus.REJECTED_READY
 
     @strawberry.field
     def status(self, info: Info) -> ProposalStatus:
         raw_status = ProposalRawStatus(self.rawStatus)
 
-        if raw_status is ProposalRawStatus.ACCEPTED:
+        if raw_status is ProposalRawStatus.APPROVED:
             return ProposalStatus.APPROVED
 
         if raw_status is ProposalRawStatus.REJECTED:
@@ -185,6 +184,7 @@ class Proposal:
     def memberDidVote(self, memberAddress: HexValue) -> bool:
         return memberAddress in self.yesVoters + self.noVoters
 
+    # pylint: disable=unused-argument
     @strawberry.field
     def memberCanVote(self, memberAddress: HexValue) -> bool:
         return True
@@ -262,6 +262,7 @@ PROPOSAL_TYPE_TO_CLASS: dict[str, Type[Proposal]] = {
 }
 
 
+# pylint: disable=too-few-public-methods
 @strawberry.type
 class Member:
     memberAddress: HexValue
@@ -295,6 +296,7 @@ def get_proposals(info: Info, limit: int = 10, skip: int = 0) -> List[Proposal]:
     return [PROPOSAL_TYPE_TO_CLASS[doc["type"]].from_mongo(doc) for doc in proposals]
 
 
+# pylint: disable=unused-argument
 def get_members(info: Info, limit: int = 10, skip: int = 0) -> List[Member]:
     members = storage.list_members(info=info)
     return [Member.from_mongo(doc) for doc in members]

@@ -1,11 +1,11 @@
 from datetime import timedelta
 from unittest.mock import Mock
+
 from pymongo import MongoClient
-from pytest import MonkeyPatch
 
-from indexer import utils, storage
+from indexer import storage, utils
 
-from .data import list_proposals_data
+from .data import data
 
 
 def test_list_members(mongomock_client: MongoClient):
@@ -13,7 +13,7 @@ def test_list_members(mongomock_client: MongoClient):
 
     members = storage.list_members(info)
 
-    assert list(members) == []
+    assert not list(members)
 
     new_members = [
         {"memberAddress": "0x1"},
@@ -63,7 +63,7 @@ def test_list_votable_members(mongomock_client: MongoClient):
         submitted_at=submitted_at,
     )
 
-    assert list(members) == []
+    assert not list(members)
 
     new_members = [
         {"memberAddress": "0x1", "onboardedAt": submitted_at},
@@ -280,11 +280,11 @@ def test_list_votable_members_jailed_at_and_exited_at(mongomock_client: MongoCli
     assert list(members) == votable_members
 
 
-def test_list_proposals(mongomock_client: MongoClient, monkeypatch: MonkeyPatch):
+def test_list_proposals(mongomock_client: MongoClient):
     info = Mock(context={"db": mongomock_client.db})
 
-    mongomock_client.db.proposals.insert_many(list_proposals_data.proposals)
-    mongomock_client.db.members.insert_many(list_proposals_data.members)
+    mongomock_client.db.proposals.insert_many(data.PROPOSALS)
+    mongomock_client.db.members.insert_many(data.MEMBERS)
 
     proposals = storage.list_proposals(info)
     proposals = list(proposals)
@@ -296,4 +296,4 @@ def test_list_proposals(mongomock_client: MongoClient, monkeypatch: MonkeyPatch)
         for member in proposal["yesVotersMembers"] + proposal["noVotersMembers"]:
             del member["_id"]
 
-    assert proposals == list_proposals_data.list_proposals_query_expected_result
+    assert proposals == data.LIST_PROPOSALS_MONGO_QUERY_EXPECTED_RESULT

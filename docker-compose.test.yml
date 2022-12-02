@@ -23,7 +23,7 @@ services:
       - mongo-test
 
   apibara-test:
-    image: apibara/starknet:ffbe469b2dadee8f5e3c11d35ee8b0f81915c63a
+    image: apibara/starknet:89301f7f55ed0c79e83b5fad172c1fb7107505a5
     restart: unless-stopped
     command: apibara-starknet start --custom-network http://devnet-test:5050 --poll-interval 500
     ports:

@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Callable, Type, Union
 
 from apibara import Info
@@ -7,13 +7,13 @@ from apibara.model import BlockHeader, StarkNetEvent
 from starknet_py.utils.data_transformer.data_transformer import CairoSerializer
 
 from .utils import (
-    function_accepts,
-    int_to_bytes,
     felt_to_str,
-    get_contract,
-    get_contract_events,
+    function_accepts,
     get_block,
     get_block_datetime_utc,
+    get_contract,
+    get_contract_events,
+    int_to_bytes,
 )
 
 
@@ -21,6 +21,7 @@ class BlockNumber(int):
     pass
 
 
+# pylint: disable=unused-argument
 async def deserialize_block_number(
     block_number: BlockNumber,
     info: Info,
@@ -51,6 +52,7 @@ deserializers: dict[Type, Serializer] = {
 }
 
 
+# pylint: disable=too-many-locals
 async def deserialize_starknet_event(
     fields: dict[str, Type],
     info: Info,
@@ -76,7 +78,8 @@ async def deserialize_starknet_event(
         values=event_data,
     )
 
-    # TODO: validate the matching between the fields and their types in python_data and __annotations__
+    # TODO: validate the matching between the fields and their types
+    # in python_data and __annotations__
     kwargs = {}
     for name, field_type in fields.items():
         if deserializer := deserializers.get(field_type):

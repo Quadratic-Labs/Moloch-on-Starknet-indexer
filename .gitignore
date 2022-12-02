@@ -1,7 +1,5 @@
 __pycache__
 _docker
-<<<<<<< Updated upstream
-venv
-=======
 venv/
->>>>>>> Stashed changes
+.coverage
+coverage_html_report
