@@ -1,5 +1,5 @@
 __pycache__
 _docker
-venv
+venv/
 .coverage
 coverage_html_report

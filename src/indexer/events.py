@@ -267,15 +267,46 @@ class MemberAdded(Event):
     memberAddress: bytes
     shares: int
     loot: int
+    onboardedAt: BlockNumber
 
     async def _handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
-        member_dict = {
-            **asdict(self),
-            "onboardedAt": get_block_datetime_utc(block),
-        }
-        await info.storage.insert_one("members", member_dict)
+        await info.storage.insert_one("members", asdict(self))
+
+
+async def update_member(
+    memberAddress: bytes,
+    document: dict,
+    info: Info,
+):
+    logger.debug("Updating member %s with %s", memberAddress, document)
+    existing = await info.storage.find_one_and_update(
+        filter={"memberAddress": memberAddress},
+        collection="members",
+        update={"$set": document},
+    )
+    logger.debug("Existing member %s", existing)
+
+
+@dataclass
+class MemberUpdated(Event):
+    memberAddress: bytes
+    delegateAddress: bytes
+    shares: int
+    loot: int
+    jailed: bool
+    lastProposalYesVote: int
+    onboardedAt: BlockNumber
+
+    async def _handle(
+        self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
+    ):
+        return await update_member(
+            memberAddress=self.memberAddress,
+            document=asdict(self),
+            info=info,
+        )
 
 
 ALL_EVENTS: dict[str, Type[Event]] = {
@@ -289,4 +320,5 @@ ALL_EVENTS: dict[str, Type[Event]] = {
     "SwapProposalAdded": SwapProposalAdded,
     "VoteSubmitted": VoteSubmitted,
     "MemberAdded": MemberAdded,
+    "MemberUpdated": MemberUpdated,
 }

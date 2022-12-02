@@ -21,6 +21,8 @@
     "python.linting.pylintArgs": [
         "--disable=invalid-name"
     ],
+    "editor.formatOnSave": true,
+    "python.formatting.provider": "black",
     "black-formatter.args": [
         "--preview"
     ]
