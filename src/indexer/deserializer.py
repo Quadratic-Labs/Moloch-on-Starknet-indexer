@@ -83,6 +83,12 @@ async def deserialize_starknet_event(
     kwargs = {}
     for name, field_type in fields.items():
         if deserializer := deserializers.get(field_type):
+            if not hasattr(python_data.tuple_value, name):
+                raise AttributeError(
+                    f"Received event {starknet_event.name}({python_data}) doesn't have"
+                    f" attribute named {name}",
+                )
+
             value = getattr(python_data, name)
 
             # Pass info, block and event arguments if the serializer accepts them
