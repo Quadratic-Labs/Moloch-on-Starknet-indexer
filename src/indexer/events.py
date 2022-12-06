@@ -12,6 +12,7 @@ from apibara.model import BlockHeader, StarkNetEvent
 
 from indexer.utils import get_block_datetime_utc
 
+from . import config, utils
 from .deserializer import BlockNumber
 from .models import ProposalRawStatus
 
@@ -20,9 +21,17 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class Event:
-    async def _write_to_events_collection(self, info: Info):
+    async def _write_to_events_collection(
+        self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
+    ):
         logger.debug("Inserting to 'events': %s", self)
-        await info.storage.insert_one("events", asdict(self))
+
+        event_dict = {
+            "name": starknet_event.name,
+            "emittedAt": get_block_datetime_utc(block),
+            **asdict(self),
+        }
+        await info.storage.insert_one("events", event_dict)
 
     # pylint: disable=unused-argument
     async def _handle(
@@ -33,22 +42,61 @@ class Event:
     async def handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
-        await self._write_to_events_collection(info)
+        await self._write_to_events_collection(
+            info=info, block=block, starknet_event=starknet_event
+        )
         await self._handle(info, block, starknet_event)
 
 
 async def update_proposal(
     proposal_id: int,
-    document: dict,
+    update: dict,
     info: Info,
 ):
-    logger.debug("Updating proposal %s with %s", proposal_id, document)
+    logger.debug("Updating proposal %s with %s", proposal_id, update)
     existing = await info.storage.find_one_and_update(
         collection="proposals",
         filter={"id": proposal_id},
-        update={"$set": document},
+        update=update,
     )
     logger.debug("Existing proposal %s", existing)
+
+
+async def update_member(
+    member_address: bytes,
+    update: dict,
+    info: Info,
+):
+    logger.debug("Updating member %s with %s", member_address, update)
+    existing = await info.storage.find_one_and_update(
+        filter={"memberAddress": member_address},
+        collection="members",
+        update=update,
+    )
+    logger.debug("Existing member %s", existing)
+
+
+async def update_bank(
+    update: dict,
+    info: Info,
+):
+    # TODO: use the same address type everywhere
+    if not await info.storage.find_one("bank", {"bankAddress": config.BANK_ADDRESS}):
+        logger.debug(
+            "Bank not found, creating it with %s", {"bankAddress": config.BANK_ADDRESS}
+        )
+        await info.storage.insert_one("bank", {"bankAddress": config.BANK_ADDRESS})
+
+    logger.debug("Updating bank with %s", update)
+
+    existing = await info.storage.find_one_and_update(
+        collection="bank",
+        filter={"bankAddress": config.BANK_ADDRESS},
+        update=update,
+    )
+    logger.debug("Existing bank %s", existing)
+    bank = await info.storage.find_one("bank", {"bankAddress": config.BANK_ADDRESS})
+    logger.debug("New bank %s", bank)
 
 
 @dataclass
@@ -63,19 +111,6 @@ class ProposalAdded(Event):
     async def _handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
-        proposal_dict = {
-            **asdict(self),
-            "rawStatus": ProposalRawStatus.SUBMITTED.value,
-            "rawStatusHistory": [
-                (
-                    ProposalRawStatus.SUBMITTED.value,
-                    get_block_datetime_utc(block),
-                )
-            ],
-        }
-        logger.debug("Inserting ProposalAdded(%s)", proposal_dict)
-        await info.storage.insert_one("proposals", proposal_dict)
-
         proposal_params = await info.storage.find_one(
             "proposal_params", {"type": self.type}
         )
@@ -90,13 +125,19 @@ class ProposalAdded(Event):
 
         del proposal_params["_id"]
 
-        logger.debug("Updating proposal %s", self)
-        existing = await info.storage.find_one_and_update(
-            collection="proposals",
-            filter={"id": self.id},
-            update={"$set": proposal_params},
-        )
-        logger.debug("Existing proposal %s", existing)
+        proposal_dict = {
+            **asdict(self),
+            **proposal_params,
+            "rawStatus": ProposalRawStatus.SUBMITTED.value,
+            "rawStatusHistory": [
+                (
+                    ProposalRawStatus.SUBMITTED.value,
+                    get_block_datetime_utc(block),
+                )
+            ],
+        }
+        logger.debug("Inserting ProposalAdded(%s)", proposal_dict)
+        await info.storage.insert_one("proposals", proposal_dict)
 
 
 @dataclass
@@ -128,7 +169,7 @@ class OnboardProposalAdded(Event):
     ):
         return await update_proposal(
             proposal_id=self.id,
-            document=asdict(self),
+            update={"$set": asdict(self)},
             info=info,
         )
 
@@ -143,21 +184,16 @@ class ProposalStatusUpdated(Event):
     ):
         await update_proposal(
             proposal_id=self.id,
-            document={"rawStatus": self.status},
-            info=info,
-        )
-
-        await info.storage.find_one_and_update(
-            collection="proposals",
-            filter={"id": self.id},
             update={
+                "$set": {"rawStatus": self.status},
                 "$push": {
                     "rawStatusHistory": (
                         ProposalRawStatus(self.status).value,
                         get_block_datetime_utc(block),
                     )
-                }
+                },
             },
+            info=info,
         )
 
 
@@ -171,7 +207,7 @@ class GuildKickProposalAdded(Event):
     ):
         return await update_proposal(
             proposal_id=self.id,
-            document=asdict(self),
+            update={"$set": asdict(self)},
             info=info,
         )
 
@@ -187,7 +223,7 @@ class WhitelistProposalAdded(Event):
     ):
         return await update_proposal(
             proposal_id=self.id,
-            document=asdict(self),
+            update={"$set": asdict(self)},
             info=info,
         )
 
@@ -203,7 +239,7 @@ class UnWhitelistProposalAdded(Event):
     ):
         return await update_proposal(
             proposal_id=self.id,
-            document=asdict(self),
+            update={"$set": asdict(self)},
             info=info,
         )
 
@@ -221,7 +257,7 @@ class SwapProposalAdded(Event):
     ):
         return await update_proposal(
             proposal_id=self.id,
-            document=asdict(self),
+            update={"$set": asdict(self)},
             info=info,
         )
 
@@ -244,10 +280,10 @@ class VoteSubmitted(Event):
         else:
             update_proposal_vote = {"$push": {"noVoters": self.onBehalfAddress}}
 
-        await info.storage.find_one_and_update(
-            collection="proposals",
-            filter={"id": self.proposalId},
+        await update_proposal(
+            proposal_id=self.proposalId,
             update=update_proposal_vote,
+            info=info,
         )
 
         if self.vote:
@@ -255,10 +291,10 @@ class VoteSubmitted(Event):
         else:
             update_member_vote = {"$push": {"noVotes": self.proposalId}}
 
-        await info.storage.find_one_and_update(
-            collection="members",
-            filter={"memberAddress": self.onBehalfAddress},
+        await update_member(
+            member_address=self.onBehalfAddress,
             update=update_member_vote,
+            info=info,
         )
 
 
@@ -275,20 +311,6 @@ class MemberAdded(Event):
         await info.storage.insert_one("members", asdict(self))
 
 
-async def update_member(
-    memberAddress: bytes,
-    document: dict,
-    info: Info,
-):
-    logger.debug("Updating member %s with %s", memberAddress, document)
-    existing = await info.storage.find_one_and_update(
-        filter={"memberAddress": memberAddress},
-        collection="members",
-        update={"$set": document},
-    )
-    logger.debug("Existing member %s", existing)
-
-
 @dataclass
 class MemberUpdated(Event):
     memberAddress: bytes
@@ -303,10 +325,117 @@ class MemberUpdated(Event):
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
         return await update_member(
-            memberAddress=self.memberAddress,
-            document=asdict(self),
+            member_address=self.memberAddress,
+            update={"$set": asdict(self)},
             info=info,
         )
+
+
+@dataclass
+class TokenWhitelisted(Event):
+    tokenAddress: bytes
+
+    async def _handle(
+        self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
+    ):
+        token_dict = {
+            **asdict(self),
+            "whitelistedAt": get_block_datetime_utc(block),
+        }
+        await update_bank(
+            update={"$push": {"whitelistedTokens": token_dict}}, info=info
+        )
+
+
+@dataclass
+class TokenUnWhitelisted(Event):
+    tokenAddress: bytes
+
+    async def _handle(
+        self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
+    ):
+        token_dict = {
+            **asdict(self),
+            "unWhitelistedAt": get_block_datetime_utc(block),
+        }
+        await update_bank(
+            update={"$push": {"unWhitelistedTokens": token_dict}}, info=info
+        )
+
+
+@dataclass
+class UserTokenBalanceIncreased(Event):
+    memberAddress: bytes
+    tokenAddress: bytes
+    # TODO: why is this ?
+    # File "/home/mohammedi/workspace/dao/indexer/src/indexer/utils.py", line 47, in uint256_to_int
+    #     return uint[0] + (uint[1] << 128)
+    # TypeError: 'int' object is not subscriptable
+    # amount: Uint256
+    amount: int
+
+    async def _handle(
+        self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
+    ):
+        token_address = utils.bytes_to_int(self.tokenAddress)
+        add_amount = {
+            "$inc": {f"balances.{token_address}": self.amount},
+            "$push": {
+                "transactions": {
+                    "memberAddress": self.memberAddress,
+                    "tokenAddress": self.tokenAddress,
+                    "timestamp": get_block_datetime_utc(block),
+                    "amount": self.amount,
+                },
+            },
+        }
+
+        if self.memberAddress == utils.int_to_bytes(config.BANK_ADDRESS):
+            await update_bank(
+                update=add_amount,
+                info=info,
+            )
+        else:
+            await update_member(
+                member_address=self.memberAddress,
+                update=add_amount,
+                info=info,
+            )
+
+
+@dataclass
+class UserTokenBalanceDecreased(Event):
+    memberAddress: bytes
+    tokenAddress: bytes
+    amount: int
+
+    async def _handle(
+        self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
+    ):
+        token_address = utils.bytes_to_int(self.tokenAddress)
+        subtract_amount = {
+            "$inc": {f"balances.{token_address}": -self.amount},
+            "$push": {
+                "transactions": {
+                    "memberAddress": self.memberAddress,
+                    "tokenAddress": self.tokenAddress,
+                    "timestamp": get_block_datetime_utc(block),
+                    "amount": -self.amount,
+                }
+            },
+        }
+
+        if self.memberAddress == utils.int_to_bytes(config.BANK_ADDRESS):
+            await update_bank(
+                update=subtract_amount,
+                info=info,
+            )
+        else:
+            await update_member(
+                member_address=self.memberAddress,
+                update=subtract_amount,
+                info=info,
+            )
 
 
 ALL_EVENTS: dict[str, Type[Event]] = {
@@ -321,4 +450,8 @@ ALL_EVENTS: dict[str, Type[Event]] = {
     "VoteSubmitted": VoteSubmitted,
     "MemberAdded": MemberAdded,
     "MemberUpdated": MemberUpdated,
+    "TokenWhitelisted": TokenWhitelisted,
+    "TokenUnWhitelisted": TokenUnWhitelisted,
+    "UserTokenBalanceIncreased": UserTokenBalanceIncreased,
+    "UserTokenBalanceDecreased": UserTokenBalanceDecreased,
 }

@@ -56,6 +56,14 @@ def bytes_to_int(a: bytes) -> int:
     return int.from_bytes(a, "big")
 
 
+def bytes_to_str(a: bytes) -> str:
+    return a.hex()
+
+
+def str_to_bytes(a: str) -> bytes:
+    return bytes.fromhex(a)
+
+
 def async_cached(cache, key=keys.hashkey):
     """Returns decorator function to cache async function results.
 
