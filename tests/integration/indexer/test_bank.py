@@ -28,6 +28,9 @@ async def test_token_whitelisted(
 
     indexer = run_indexer_process(filters, default_new_events_handler)
 
+    token_name = "Fee Token"
+    token_address = constants.FEE_TOKEN_ADDRESS
+
     # the fee token is already being whitelisted in main.cairo
     # No need to trigger the event again
 
@@ -56,8 +59,11 @@ async def test_token_whitelisted(
     tokens = bank["whitelistedTokens"]
     assert len(tokens) == 1
 
-    assert tokens[0]["tokenAddress"] == utils.int_to_bytes(constants.FEE_TOKEN_ADDRESS)
-    assert tokens[0]["whitelistedAt"] == block_datetime
+    assert tokens[0] == {
+        "tokenName": token_name,
+        "tokenAddress": utils.int_to_bytes(token_address),
+        "whitelistedAt": block_datetime,
+    }
 
 
 async def test_token_unwhitelisted(
@@ -67,6 +73,7 @@ async def test_token_unwhitelisted(
     client: AccountClient,
     mongo_client: pymongo.MongoClient,
 ):
+    token_name = "Fee Token"
     token_address = constants.FEE_TOKEN_ADDRESS
 
     filters = [
@@ -82,6 +89,7 @@ async def test_token_unwhitelisted(
         contract=contract,
         contract_events=contract_events,
         client=client,
+        token_name=token_name,
         token_address=token_address,
     )
     block = await client.get_block(transaction_receipt.block_hash)
@@ -101,8 +109,11 @@ async def test_token_unwhitelisted(
     tokens = bank["unWhitelistedTokens"]
     assert len(tokens) == 1
 
-    assert tokens[0]["tokenAddress"] == utils.int_to_bytes(constants.FEE_TOKEN_ADDRESS)
-    assert tokens[0]["unWhitelistedAt"] == block_datetime
+    assert tokens[0] == {
+        "tokenName": token_name,
+        "tokenAddress": utils.int_to_bytes(token_address),
+        "unWhitelistedAt": block_datetime,
+    }
 
 
 @pytest.mark.parametrize(

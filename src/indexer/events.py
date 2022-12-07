@@ -333,6 +333,7 @@ class MemberUpdated(Event):
 
 @dataclass
 class TokenWhitelisted(Event):
+    tokenName: str
     tokenAddress: bytes
 
     async def _handle(
@@ -349,6 +350,7 @@ class TokenWhitelisted(Event):
 
 @dataclass
 class TokenUnWhitelisted(Event):
+    tokenName: str
     tokenAddress: bytes
 
     async def _handle(

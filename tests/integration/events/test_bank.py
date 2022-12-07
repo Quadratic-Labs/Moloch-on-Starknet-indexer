@@ -12,10 +12,11 @@ async def test_token_whitelisted(
     contract: Contract,
     contract_events: dict,
     client: AccountClient,
+    token_name="Some Token",
     token_address=constants.TOKEN_ADDRESS,
 ):
     invoke_result = await contract.functions["Bank_add_token_proxy"].invoke(
-        tokenAddress=token_address, max_fee=10**16
+        tokenName=token_name, tokenAddress=token_address, max_fee=10**16
     )
     await invoke_result.wait_for_acceptance()
 
@@ -39,6 +40,7 @@ async def test_token_whitelisted(
         value_types=emitted_event_abi["data"], values=events[0].data
     )
 
+    assert python_data.tokenName == utils.str_to_felt(token_name)
     assert python_data.tokenAddress == token_address
 
     return transaction_receipt
@@ -48,10 +50,11 @@ async def test_token_unwhitelisted(
     contract: Contract,
     contract_events: dict,
     client: AccountClient,
+    token_name="Some Token",
     token_address=constants.FEE_TOKEN_ADDRESS,
 ):
     invoke_result = await contract.functions["Bank_remove_token_proxy"].invoke(
-        tokenAddress=token_address, max_fee=10**16
+        tokenName=token_name, tokenAddress=token_address, max_fee=10**16
     )
     await invoke_result.wait_for_acceptance()
 
@@ -75,6 +78,7 @@ async def test_token_unwhitelisted(
         value_types=emitted_event_abi["data"], values=events[0].data
     )
 
+    assert python_data.tokenName == utils.str_to_felt(token_name)
     assert python_data.tokenAddress == token_address
 
     return transaction_receipt
