@@ -3,7 +3,7 @@ from starknet_py.contract import Contract
 from starknet_py.net.account.account_client import AccountClient
 from starknet_py.utils.data_transformer.data_transformer import CairoSerializer
 
-from indexer import utils
+from dao import utils
 
 from .. import constants
 

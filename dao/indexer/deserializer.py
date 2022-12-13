@@ -6,7 +6,7 @@ from apibara import Info
 from apibara.model import BlockHeader, StarkNetEvent
 from starknet_py.utils.data_transformer.data_transformer import CairoSerializer
 
-from .utils import (
+from ..utils import (
     felt_to_str,
     function_accepts,
     get_block,
@@ -14,10 +14,15 @@ from .utils import (
     get_contract,
     get_contract_events,
     int_to_bytes,
+    uint256_dict_to_int,
 )
 
 
 class BlockNumber(int):
+    pass
+
+
+class Uint256(int):
     pass
 
 
@@ -49,6 +54,7 @@ deserializers: dict[Type, Serializer] = {
     BlockNumber: deserialize_block_number,
     bytes: int_to_bytes,
     str: felt_to_str,
+    Uint256: uint256_dict_to_int,
 }
 
 

@@ -4,8 +4,8 @@ from apibara import EventFilter
 from starknet_py.contract import Contract
 from starknet_py.net.account.account_client import AccountClient
 
-from indexer import utils
-from indexer.indexer import default_new_events_handler
+from dao import utils
+from dao.indexer.main import default_new_events_handler
 
 from ...conftest import IndexerProcessRunner
 from .. import test_utils

@@ -40,4 +40,4 @@ repos:
     entry: pylint
     language: system
     types: [python]
-    args: ["--disable", "missing-docstring,fixme,invalid-name,inconsistent-return-statements"]
+    args: ["--disable", "missing-docstring,fixme,invalid-name,inconsistent-return-statements", "--min-public-methods", "0"]

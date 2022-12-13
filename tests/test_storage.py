@@ -3,7 +3,8 @@ from unittest.mock import Mock
 
 from pymongo import MongoClient
 
-from indexer import storage, utils
+from dao import utils
+from dao.graphql import storage
 
 from .data import data
 

@@ -25,5 +25,5 @@
     "python.formatting.provider": "black",
     "black-formatter.args": [
         "--preview"
-    ]
+    ],
 }

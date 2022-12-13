@@ -7,7 +7,9 @@ import click
 from apibara.model import EventFilter
 from starknet_py.net.gateway_client import GatewayClient
 
-from indexer import config, graphql, indexer, utils
+from dao import config, utils
+from dao.graphql import main as graphql_main
+from dao.indexer import main as indexer_main
 
 
 def async_command(coro):
@@ -84,7 +86,7 @@ async def start_indexer(
 
     filters = [EventFilter.from_event_name(name, contract_address) for name in events]
 
-    await indexer.run_indexer(
+    await indexer_main.run_indexer(
         server_url=server_url,
         mongo_url=mongo_url,
         starknet_network_url=starknet_network_url,
@@ -119,7 +121,7 @@ async def start_indexer(
 @async_command
 async def start_graphql(mongo_url, db_name, host, port):
     """Start the GraphQL server."""
-    await graphql.run_graphql(
+    await graphql_main.run_graphql(
         mongo_url=mongo_url,
         db_name=db_name,
         host=host,

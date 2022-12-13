@@ -21,8 +21,8 @@ from starknet_py.net.gateway_client import GatewayClient
 from starknet_py.net.models import StarknetChainId
 from starknet_py.net.signer.stark_curve_signer import KeyPair
 
-from indexer.graphql import run_graphql
-from indexer.indexer import run_indexer
+from dao.graphql.main import run_graphql
+from dao.indexer.main import run_indexer
 
 from . import config
 from .integration.test_utils import (

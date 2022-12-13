@@ -6,7 +6,7 @@ from typing import Any, Optional
 from pymongo.database import Database
 from strawberry.types import Info
 
-from . import config, utils
+from .. import config, utils
 
 
 def list_members(info: Info, filter=None):
