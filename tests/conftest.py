@@ -12,7 +12,7 @@ import pymongo
 import pytest
 import requests
 from apibara import EventFilter
-from pytest import MonkeyPatch
+from pytest import Item, MonkeyPatch
 from python_on_whales import Container
 from starknet_py.compile.compiler import Compiler
 from starknet_py.contract import Contract
@@ -32,6 +32,13 @@ from .integration.test_utils import (
     wait_for_devnet,
     wait_for_docker_services,
 )
+
+
+def pytest_collection_modifyitems(items: list[Item]):
+    """Mark all tests that uses docker services as slow"""
+    for item in items:
+        if "docker_compose_services" in getattr(item, "fixturenames", ()):
+            item.add_marker("slow")
 
 
 @dataclass
