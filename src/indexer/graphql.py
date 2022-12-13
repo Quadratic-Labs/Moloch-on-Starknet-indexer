@@ -31,8 +31,34 @@ HexValue = strawberry.scalar(
 )
 
 
+# pylint: disable=too-few-public-methods
+class FromMongoMixin:
+    @classmethod
+    def from_mongo(cls, data: dict):
+        logger.debug("Creating %s from mongo data: %s", cls.__name__, data)
+
+        fields = utils.all_annotations(cls)
+
+        kwargs = {name: value for name, value in data.items() if name in fields}
+        non_kwargs = {name: value for name, value in data.items() if name not in fields}
+
+        logger.debug("Fields: %s", fields)
+        logger.debug(
+            "Creating %s with kwargs: %s, non_kwargs: %s",
+            cls.__name__,
+            kwargs,
+            non_kwargs,
+        )
+
+        instance = cls(**kwargs)
+
+        instance.__dict__.update(non_kwargs)
+
+        return instance
+
+
 @strawberry.interface
-class Proposal:
+class Proposal(FromMongoMixin):
     id: int
     title: str
     type: str
@@ -189,29 +215,6 @@ class Proposal:
     def memberCanVote(self, memberAddress: HexValue) -> bool:
         return True
 
-    @classmethod
-    def from_mongo(cls, data: dict):
-        logger.debug("Creating proposal from mongo: %s", data)
-
-        fields = utils.all_annotations(cls)
-
-        kwargs = {name: value for name, value in data.items() if name in fields}
-        non_kwargs = {name: value for name, value in data.items() if name not in fields}
-
-        logger.debug("Fields: %s", fields)
-        logger.debug(
-            "Creating %s with kwargs: %s, non_kwargs: %s",
-            cls.__name__,
-            kwargs,
-            non_kwargs,
-        )
-
-        proposal = cls(**kwargs)
-
-        proposal.__dict__.update(non_kwargs)
-
-        return proposal
-
 
 @strawberry.type
 class Signaling(Proposal):
@@ -262,9 +265,8 @@ PROPOSAL_TYPE_TO_CLASS: dict[str, Type[Proposal]] = {
 }
 
 
-# pylint: disable=too-few-public-methods
 @strawberry.type
-class Member:
+class Member(FromMongoMixin):
     memberAddress: HexValue
     shares: int
     loot: int
@@ -272,23 +274,27 @@ class Member:
     yesVotes: list[HexValue] = strawberry.field(default_factory=list)
     noVotes: list[HexValue] = strawberry.field(default_factory=list)
 
-    @classmethod
-    def from_mongo(cls, data: dict):
-        logger.debug("Creating member from mongo: %s", data)
 
-        fields = utils.all_annotations(cls)
+@strawberry.type
+class Balance:
+    tokenName: str
+    tokenAddress: HexValue
+    amount: int
 
-        kwargs = {name: value for name, value in data.items() if name in fields}
-        non_kwargs = {name: value for name, value in data.items() if name not in fields}
 
-        logger.debug("Fields: %s", fields)
-        logger.debug("Creating with kwargs: %s, non_kwargs: %s", kwargs, non_kwargs)
+@strawberry.type
+class Transaction:
+    tokenAddress: HexValue
+    memberAddress: HexValue
+    timestamp: datetime
+    amount: int
 
-        member = cls(**kwargs)
 
-        member.__dict__.update(non_kwargs)
-
-        return member
+@strawberry.type
+class Bank(FromMongoMixin):
+    bankAddress: HexValue
+    balances: list[Balance]
+    transactions: list[Transaction]
 
 
 def get_proposals(info: Info, limit: int = 10, skip: int = 0) -> List[Proposal]:
@@ -302,10 +308,22 @@ def get_members(info: Info, limit: int = 10, skip: int = 0) -> List[Member]:
     return [Member.from_mongo(doc) for doc in members]
 
 
+def get_bank(info: Info) -> Bank:
+    bank = storage.get_bank(info=info)
+    return Bank(
+        bankAddress=bank["bankAddress"],
+        balances=[Balance(**balance) for balance in bank["balances"]],
+        transactions=[
+            Transaction(**transaction) for transaction in bank["transactions"]
+        ],
+    )
+
+
 @strawberry.type
 class Query:
     proposals: List[Proposal] = strawberry.field(resolver=get_proposals)
     members: List[Member] = strawberry.field(resolver=get_members)
+    bank: Bank = strawberry.field(resolver=get_bank)
 
 
 schema = strawberry.Schema(query=Query, types=list(PROPOSAL_TYPE_TO_CLASS.values()))

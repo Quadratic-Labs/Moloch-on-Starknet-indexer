@@ -170,10 +170,15 @@ async def test_balance_increased(
         balances = members[0]["balances"]
         transactions = members[0]["transactions"]
 
-    assert balances == {str(token_address): amount}
+    assert balances == [
+        {
+            "tokenAddress": utils.int_to_bytes(token_address),
+            "tokenName": None,
+            "amount": amount,
+        }
+    ]
     assert transactions == [
         {
-            "memberAddress": utils.int_to_bytes(member_address),
             "tokenAddress": utils.int_to_bytes(token_address),
             "timestamp": block_datetime,
             "amount": amount,
@@ -236,12 +241,143 @@ async def test_balance_decreased(
         balances = members[0]["balances"]
         transactions = members[0]["transactions"]
 
-    assert balances == {str(token_address): -amount}
+    assert balances == [
+        {
+            "tokenAddress": utils.int_to_bytes(token_address),
+            "tokenName": None,
+            "amount": -amount,
+        }
+    ]
     assert transactions == [
         {
-            "memberAddress": utils.int_to_bytes(member_address),
             "tokenAddress": utils.int_to_bytes(token_address),
             "timestamp": block_datetime,
             "amount": -amount,
         }
+    ]
+
+
+async def get_transaction_datetime(client, transaction_receipt):
+    block = await client.get_block(transaction_receipt.block_hash)
+    return utils.get_block_datetime_utc(block)
+
+
+@pytest.mark.parametrize(
+    "member_address", [constants.ACCOUNT_ADDRESS, config.BANK_ADDRESS]
+)
+async def test_balance_changes_multiple_times(
+    member_address,
+    run_indexer_process: IndexerProcessRunner,
+    contract: Contract,
+    contract_events: dict,
+    client: AccountClient,
+    mongo_client: pymongo.MongoClient,
+):
+    token_address = constants.FEE_TOKEN_ADDRESS
+    # Avoid Error message: SafeUint256: subtraction overflow
+    increase1 = 30
+    decrease1 = 5
+    increase2 = 15
+    decrease2 = 10
+
+    expected_amount = increase1 + increase2 - decrease1 - decrease2
+
+    filters = [
+        EventFilter.from_event_name(
+            name="MemberAdded",
+            address=contract.address,
+        ),
+        EventFilter.from_event_name(
+            name="TokenWhitelisted",
+            address=contract.address,
+        ),
+        EventFilter.from_event_name(
+            name="UserTokenBalanceIncreased",
+            address=contract.address,
+        ),
+        EventFilter.from_event_name(
+            name="UserTokenBalanceDecreased",
+            address=contract.address,
+        ),
+    ]
+
+    indexer = run_indexer_process(filters, default_new_events_handler)
+
+    transaction_receipt1 = await test_bank.test_balance_increased(
+        contract=contract,
+        contract_events=contract_events,
+        client=client,
+        member_address=member_address,
+        token_address=token_address,
+        amount=increase1,
+    )
+    transaction_receipt2 = await test_bank.test_balance_decreased(
+        contract=contract,
+        contract_events=contract_events,
+        client=client,
+        member_address=member_address,
+        token_address=token_address,
+        amount=decrease1,
+    )
+    transaction_receipt3 = await test_bank.test_balance_increased(
+        contract=contract,
+        contract_events=contract_events,
+        client=client,
+        member_address=member_address,
+        token_address=token_address,
+        amount=increase2,
+    )
+    transaction_receipt4 = await test_bank.test_balance_decreased(
+        contract=contract,
+        contract_events=contract_events,
+        client=client,
+        member_address=member_address,
+        token_address=token_address,
+        amount=decrease2,
+    )
+
+    mongo_db = mongo_client[indexer.id]
+    # Wait for the indexer to reach the transaction block_number to be sure
+    # our events were processed
+    test_utils.wait_for_indexer(mongo_db, transaction_receipt4.block_number)
+
+    if member_address == config.BANK_ADDRESS:
+        bank = list(mongo_db["bank"].find({"_chain.valid_to": None}))
+        assert len(bank) == 1
+        balances = bank[0]["balances"]
+        transactions = bank[0]["transactions"]
+    else:
+        members = list(mongo_db["members"].find({"_chain.valid_to": None}))
+        assert len(members) == 1
+        balances = members[0]["balances"]
+        transactions = members[0]["transactions"]
+
+    assert balances == [
+        {
+            "tokenAddress": utils.int_to_bytes(token_address),
+            "tokenName": "Fee Token",
+            "amount": expected_amount,
+        }
+    ]
+    assert transactions == [
+        {
+            "tokenAddress": utils.int_to_bytes(token_address),
+            "timestamp": await get_transaction_datetime(client, transaction_receipt1),
+            "amount": increase1,
+        },
+        {
+            "tokenAddress": utils.int_to_bytes(token_address),
+            "timestamp": await get_transaction_datetime(client, transaction_receipt2),
+            "amount": -decrease1,
+        },
+        {
+            "tokenAddress": utils.int_to_bytes(token_address),
+            "timestamp": await get_transaction_datetime(client, transaction_receipt3),
+            "amount": increase2,
+        },
+        {
+            "tokenAddress": utils.int_to_bytes(token_address),
+            "timestamp": await get_transaction_datetime(client, transaction_receipt4),
+            "amount": -decrease2,
+        },
     ]

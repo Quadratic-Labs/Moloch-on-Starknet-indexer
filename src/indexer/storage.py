@@ -1,3 +1,4 @@
+# pylint: disable=redefined-builtin
 import os
 from datetime import datetime
 from typing import Any, Optional
@@ -5,14 +6,16 @@ from typing import Any, Optional
 from pymongo.database import Database
 from strawberry.types import Info
 
+from . import config, utils
 
-def list_members(info: Info, query=None):
-    if query is None:
-        query = {}
+
+def list_members(info: Info, filter=None):
+    if filter is None:
+        filter = {}
 
     db: Database = info.context["db"]
     # TODO: Use dataloaders or any other mechanism for caching
-    members = db["members"].find({"_chain.valid_to": None, **query})
+    members = db["members"].find({"_chain.valid_to": None, **filter})
     return members
 
 
@@ -115,3 +118,14 @@ def list_proposals(
     proposals = db["proposals"].aggregate(pipeline)
 
     return proposals
+
+
+def get_bank(info: Info):
+    db: Database = info.context["db"]
+    bank = db["bank"].find_one(
+        {
+            "_chain.valid_to": None,
+            "bankAddress": utils.int_to_bytes(config.BANK_ADDRESS),
+        }
+    )
+    return bank
