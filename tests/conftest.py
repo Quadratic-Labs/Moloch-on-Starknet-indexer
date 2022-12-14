@@ -1,5 +1,6 @@
 # pylint: disable=redefined-outer-name,unused-argument
 import asyncio
+import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime
@@ -32,6 +33,17 @@ from .integration.test_utils import (
     wait_for_devnet,
     wait_for_docker_services,
 )
+
+
+# TODO: move the logs configuration to a config file
+def disable_annoying_debug_loggers():
+    loggers_names = ["grpc", "grpc_requests.aio", "apibara", "asyncio"]
+    for logger_name in loggers_names:
+        logging.getLogger(logger_name).setLevel(logging.INFO)
+
+
+def pytest_sessionstart():
+    disable_annoying_debug_loggers()
 
 
 def pytest_collection_modifyitems(items: list[Item]):
