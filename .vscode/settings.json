@@ -2,7 +2,7 @@
     "python.testing.pytestArgs": [
         "tests",
         "--keep-docker-services",
-        "--cov=src",
+        "--cov=dao",
         "--cov-report=html",
         "--cov-report=term"
     ],
