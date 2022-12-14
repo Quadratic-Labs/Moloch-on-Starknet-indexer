@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import NewType
 
 import strawberry
@@ -45,3 +46,17 @@ class FromMongoMixin:
         instance.__dict__.update(non_kwargs)
 
         return instance
+
+
+@strawberry.type
+class Balance:
+    tokenName: str
+    tokenAddress: HexValue
+    amount: int
+
+
+@strawberry.type
+class Transaction:
+    tokenAddress: HexValue
+    timestamp: datetime
+    amount: int

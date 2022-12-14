@@ -9,6 +9,9 @@ START_TIME_STRING = "2022-11-18T00:00:00+00:00"
 VOTING_PERIOD_ENDING_AT_STRING = "2022-11-18T01:00:00+00:00"
 GRACE_PERIOD_ENDING_AT_STRING = "2022-11-18T03:00:00+00:00"
 
+TOKEN_NAME = "Test Token"
+AMOUNT = 102
+
 
 @dataclass
 class Address:
@@ -16,6 +19,8 @@ class Address:
     string: str
     bytes: bytes
 
+
+BANK_ADDRESS = Address(integer=0x0CCC, string="0x0ccc", bytes=b"\x0c\xcc")
 
 TOKEN_ADDRESS = Address(
     integer=0x62230EA046A9A5FBC261AC77D03C8D41E5D442DB2284587570AB46455FD2488,
@@ -219,6 +224,38 @@ PROPOSALS = [
         "noVoters": [ADDRESSES[2].bytes, ADDRESSES[3].bytes],
     },
 ]
+
+BANK = {
+    "bankAddress": BANK_ADDRESS.bytes,
+    "whitelistedTokens": [
+        {
+            "tokenName": TOKEN_NAME,
+            "tokenAddress": TOKEN_ADDRESS.bytes,
+            "whitelistedAt": START_TIME,
+        }
+    ],
+    "unWhitelistedTokens": [
+        {
+            "tokenName": TOKEN_NAME,
+            "tokenAddress": TOKEN_ADDRESS.bytes,
+            "unWhitelistedAt": START_TIME,
+        }
+    ],
+    "balances": [
+        {
+            "tokenName": TOKEN_NAME,
+            "tokenAddress": TOKEN_ADDRESS.bytes,
+            "amount": AMOUNT,
+        }
+    ],
+    "transactions": [
+        {
+            "tokenAddress": TOKEN_ADDRESS.bytes,
+            "timestamp": START_TIME,
+            "amount": AMOUNT,
+        }
+    ],
+}
 
 LIST_PROPOSALS_MONGO_QUERY_EXPECTED_RESULT = [
     {

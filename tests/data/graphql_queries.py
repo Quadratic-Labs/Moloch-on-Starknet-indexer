@@ -75,3 +75,30 @@ LIST_MEMBERS = """query Proposals {
   }
 }
 """
+
+BANK = """query Bank {
+  bank {
+    bankAddress
+    whitelistedTokens {
+      tokenName
+      tokenAddress
+      whitelistedAt
+    }
+    unWhitelistedTokens {
+      tokenName
+      tokenAddress
+      unWhitelistedAt
+    }
+    balances {
+      tokenName
+      tokenAddress
+      amount
+    }
+    transactions {
+      tokenAddress
+      timestamp
+      amount
+    }
+  }
+}
+"""
