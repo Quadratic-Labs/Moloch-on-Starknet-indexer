@@ -1,9 +1,4 @@
 # pylint: disable=redefined-builtin
-"""Inherit from `Event` to get a free `from_starknet_event` method that creates
-in instance from a `StarkNetEvent`, the from_starknet_event method uses the type hints
-given in the dataclass to know how to deserialize the values
-"""
-
 from dataclasses import asdict, dataclass
 
 from apibara import Info
@@ -52,11 +47,6 @@ class TokenUnWhitelisted(BaseEvent):
 class UserTokenBalanceIncreased(BaseEvent):
     memberAddress: bytes
     tokenAddress: bytes
-    # TODO: why is this ?
-    # File "/home/mohammedi/workspace/dao/indexer/src/indexer/utils.py", line 47, in uint256_to_int
-    #     return uint[0] + (uint[1] << 128)
-    # TypeError: 'int' object is not subscriptable
-    # amount: Uint256
     amount: int
 
     async def _handle(

@@ -69,7 +69,7 @@ async def test_member_updated(
     contract_events: dict,
     client: AccountClient,
     address=constants.ACCOUNT_ADDRESS,
-    delegateAddress=35555,
+    delegateAddress=constants.ACCOUNT_ADDRESS2,
     shares=42,
     loot=42,
     jailed=0,

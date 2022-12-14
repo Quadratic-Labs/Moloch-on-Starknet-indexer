@@ -64,7 +64,7 @@ async def update_bank(
 
     bank_address = utils.int_to_bytes(config.BANK_ADDRESS)
 
-    # C
+    # Create bank if not exists
     if not await info.storage.find_one("bank", {"bankAddress": bank_address}):
         logger.debug(
             "Bank not found, creating it with %s", {"bankAddress": bank_address}
@@ -98,7 +98,7 @@ async def add_token_if_not_exists(
     bank_address = utils.int_to_bytes(config.BANK_ADDRESS)
     if member_address == bank_address:
         bank = await get_bank(info=info, filter=token_address_filter)
-        # The member doesn't have the token in his balances list
+        # The bank doesn't have the token in its balances list
         # TODO: make it clearer and easier. Ex: use another functions get_balances
         # to avoid checking if the member is None to know if the query returned
         # or not

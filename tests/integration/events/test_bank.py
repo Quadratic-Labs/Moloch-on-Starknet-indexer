@@ -124,15 +124,6 @@ async def test_balance_increased(
 
     assert python_data.tokenAddress == token_address
     assert python_data.memberAddress == member_address
-    # TODO: why is this ?
-    # E AssertionError: assert 10 == {'high': 0, 'low': 10}
-    # E +  where 10 = Result(
-    # memberAddress=1533120206599728276921831246712827877281804428397163774986051390258290249995,
-    # tokenAddress=2774287484619332564597403632816768868845110259953541691709975889937073775752,
-    # amount=10).amount
-    # E +  and   {'high': 0, 'low': 10} = <function int_to_uint256_dict at 0x7fcc31308940>(10)
-    # E +    where <function int_to_uint256_dict at 0x7fcc31308940> = utils.int_to_uint256_dict
-    # assert python_data.amount == utils.int_to_uint256_dict(amount)
     assert python_data.amount == amount
 
     return transaction_receipt
@@ -144,7 +135,8 @@ async def test_balance_decreased(
     client: AccountClient,
     member_address=constants.ACCOUNT_ADDRESS,
     token_address=constants.FEE_TOKEN_ADDRESS,
-    # Avoid Error message: SafeUint256: subtraction overflow
+    # Set to zero to avoid Error message: SafeUint256: subtraction overflow since
+    # cairo doesn't accept negative values
     amount=0,
 ):
     invoke_result = await contract.functions[
