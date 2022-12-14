@@ -72,6 +72,16 @@ LIST_MEMBERS = """query Proposals {
     shares
     loot
     onboardedAt
+    balances {
+      tokenName
+      tokenAddress
+      amount
+    }
+    transactions {
+      tokenAddress
+      timestamp
+      amount
+    }
   }
 }
 """

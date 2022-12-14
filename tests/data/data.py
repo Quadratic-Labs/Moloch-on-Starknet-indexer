@@ -85,12 +85,28 @@ MEMBERS = [
         "onboardedAt": START_TIME,
         "shares": 7,
         "loot": 5,
+        "balances": [
+            {
+                "tokenAddress": TOKEN_ADDRESS.bytes,
+                "tokenName": TOKEN_NAME,
+                "amount": AMOUNT,
+            }
+        ],
+        "transactions": [
+            {
+                "tokenAddress": TOKEN_ADDRESS.bytes,
+                "timestamp": START_TIME,
+                "amount": AMOUNT,
+            }
+        ],
     },
     {
         "memberAddress": ADDRESSES[1].bytes,
         "onboardedAt": START_TIME,
         "shares": 8,
         "loot": 5,
+        "balances": [],
+        "transactions": [],
     },
     {
         "memberAddress": ADDRESSES[2].bytes,
@@ -278,12 +294,28 @@ LIST_PROPOSALS_MONGO_QUERY_EXPECTED_RESULT = [
                 "onboardedAt": START_TIME,
                 "shares": 7,
                 "loot": 5,
+                "balances": [
+                    {
+                        "tokenAddress": TOKEN_ADDRESS.bytes,
+                        "tokenName": TOKEN_NAME,
+                        "amount": AMOUNT,
+                    }
+                ],
+                "transactions": [
+                    {
+                        "tokenAddress": TOKEN_ADDRESS.bytes,
+                        "timestamp": START_TIME,
+                        "amount": AMOUNT,
+                    }
+                ],
             },
             {
                 "memberAddress": ADDRESSES[1].bytes,
                 "onboardedAt": START_TIME,
                 "shares": 8,
                 "loot": 5,
+                "balances": [],
+                "transactions": [],
             },
         ],
         "noVoters": [ADDRESSES[2].bytes, ADDRESSES[3].bytes],
@@ -327,12 +359,28 @@ LIST_PROPOSALS_MONGO_QUERY_EXPECTED_RESULT = [
                 "onboardedAt": START_TIME,
                 "shares": 7,
                 "loot": 5,
+                "balances": [
+                    {
+                        "tokenAddress": TOKEN_ADDRESS.bytes,
+                        "tokenName": TOKEN_NAME,
+                        "amount": AMOUNT,
+                    }
+                ],
+                "transactions": [
+                    {
+                        "tokenAddress": TOKEN_ADDRESS.bytes,
+                        "timestamp": START_TIME,
+                        "amount": AMOUNT,
+                    }
+                ],
             },
             {
                 "memberAddress": ADDRESSES[1].bytes,
                 "onboardedAt": START_TIME,
                 "shares": 8,
                 "loot": 5,
+                "balances": [],
+                "transactions": [],
             },
         ],
         "noVoters": [ADDRESSES[2].bytes, ADDRESSES[3].bytes],
@@ -372,12 +420,28 @@ LIST_PROPOSALS_MONGO_QUERY_EXPECTED_RESULT = [
                 "onboardedAt": START_TIME,
                 "shares": 7,
                 "loot": 5,
+                "balances": [
+                    {
+                        "tokenAddress": TOKEN_ADDRESS.bytes,
+                        "tokenName": TOKEN_NAME,
+                        "amount": AMOUNT,
+                    }
+                ],
+                "transactions": [
+                    {
+                        "tokenAddress": TOKEN_ADDRESS.bytes,
+                        "timestamp": START_TIME,
+                        "amount": AMOUNT,
+                    }
+                ],
             },
             {
                 "memberAddress": ADDRESSES[1].bytes,
                 "onboardedAt": START_TIME,
                 "shares": 8,
                 "loot": 5,
+                "balances": [],
+                "transactions": [],
             },
         ],
         "noVoters": [ADDRESSES[2].bytes, ADDRESSES[3].bytes],
@@ -418,12 +482,28 @@ LIST_PROPOSALS_MONGO_QUERY_EXPECTED_RESULT = [
                 "onboardedAt": START_TIME,
                 "shares": 7,
                 "loot": 5,
+                "balances": [
+                    {
+                        "tokenAddress": TOKEN_ADDRESS.bytes,
+                        "tokenName": TOKEN_NAME,
+                        "amount": AMOUNT,
+                    }
+                ],
+                "transactions": [
+                    {
+                        "tokenAddress": TOKEN_ADDRESS.bytes,
+                        "timestamp": START_TIME,
+                        "amount": AMOUNT,
+                    }
+                ],
             },
             {
                 "memberAddress": ADDRESSES[1].bytes,
                 "onboardedAt": START_TIME,
                 "shares": 8,
                 "loot": 5,
+                "balances": [],
+                "transactions": [],
             },
         ],
         "noVoters": [ADDRESSES[2].bytes, ADDRESSES[3].bytes],
@@ -464,12 +544,28 @@ LIST_PROPOSALS_MONGO_QUERY_EXPECTED_RESULT = [
                 "onboardedAt": START_TIME,
                 "shares": 7,
                 "loot": 5,
+                "balances": [
+                    {
+                        "tokenAddress": TOKEN_ADDRESS.bytes,
+                        "tokenName": TOKEN_NAME,
+                        "amount": AMOUNT,
+                    }
+                ],
+                "transactions": [
+                    {
+                        "tokenAddress": TOKEN_ADDRESS.bytes,
+                        "timestamp": START_TIME,
+                        "amount": AMOUNT,
+                    }
+                ],
             },
             {
                 "memberAddress": ADDRESSES[1].bytes,
                 "onboardedAt": START_TIME,
                 "shares": 8,
                 "loot": 5,
+                "balances": [],
+                "transactions": [],
             },
         ],
         "noVoters": [ADDRESSES[2].bytes, ADDRESSES[3].bytes],
@@ -512,12 +608,28 @@ LIST_PROPOSALS_MONGO_QUERY_EXPECTED_RESULT = [
                 "onboardedAt": START_TIME,
                 "shares": 7,
                 "loot": 5,
+                "balances": [
+                    {
+                        "tokenAddress": TOKEN_ADDRESS.bytes,
+                        "tokenName": TOKEN_NAME,
+                        "amount": AMOUNT,
+                    }
+                ],
+                "transactions": [
+                    {
+                        "tokenAddress": TOKEN_ADDRESS.bytes,
+                        "timestamp": START_TIME,
+                        "amount": AMOUNT,
+                    }
+                ],
             },
             {
                 "memberAddress": ADDRESSES[1].bytes,
                 "onboardedAt": START_TIME,
                 "shares": 8,
                 "loot": 5,
+                "balances": [],
+                "transactions": [],
             },
         ],
         "noVoters": [ADDRESSES[2].bytes, ADDRESSES[3].bytes],
@@ -777,29 +889,51 @@ LIST_MEMBERS_GRAPHQL_QUERY_EXPECTED_RESULT = [
         "onboardedAt": START_TIME_STRING,
         "shares": 7,
         "loot": 5,
+        "balances": [
+            {
+                "tokenName": TOKEN_NAME,
+                "tokenAddress": TOKEN_ADDRESS.string,
+                "amount": AMOUNT,
+            }
+        ],
+        "transactions": [
+            {
+                "tokenAddress": TOKEN_ADDRESS.string,
+                "timestamp": START_TIME_STRING,
+                "amount": AMOUNT,
+            }
+        ],
     },
     {
         "memberAddress": ADDRESSES[1].string,
         "onboardedAt": START_TIME_STRING,
         "shares": 8,
         "loot": 5,
+        "balances": [],
+        "transactions": [],
     },
     {
         "memberAddress": ADDRESSES[2].string,
         "onboardedAt": START_TIME_STRING,
         "shares": 2,
         "loot": 5,
+        "balances": [],
+        "transactions": [],
     },
     {
         "memberAddress": ADDRESSES[3].string,
         "onboardedAt": START_TIME_STRING,
         "shares": 3,
         "loot": 5,
+        "balances": [],
+        "transactions": [],
     },
     {
         "memberAddress": ADDRESSES[4].string,
         "onboardedAt": START_TIME_STRING,
         "shares": 5,
         "loot": 5,
+        "balances": [],
+        "transactions": [],
     },
 ]
