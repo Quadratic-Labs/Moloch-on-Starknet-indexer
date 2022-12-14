@@ -1,48 +1,15 @@
-import logging
-from typing import Any, Callable, Coroutine, Type
+from typing import Any, Callable, Coroutine
 
 from apibara import IndexerRunner, Info
 from apibara.indexer import IndexerRunnerConfiguration
-from apibara.model import BlockHeader, EventFilter, NewEvents, StarkNetEvent
+from apibara.model import BlockHeader, EventFilter, StarkNetEvent
 from starknet_py.net.gateway_client import GatewayClient
 
-from . import config, events
-from .deserializer import deserialize_starknet_event
+from dao import config
+from dao.indexer import logger
+from dao.indexer.handler import default_new_events_handler
 
 EventHandler = Callable[[Info, BlockHeader, StarkNetEvent], Coroutine[Any, Any, None]]
-
-logger = logging.getLogger(__name__)
-
-
-async def default_new_events_handler(
-    info: Info,
-    block_events: NewEvents,
-    event_classes: dict[str, Type[events.Event]] = None,
-):
-    if event_classes is None:
-        event_classes = events.ALL_EVENTS
-
-    for starknet_event in block_events.events:
-        if event_class := event_classes.get(starknet_event.name):
-            logger.debug(
-                "Handling event=%s emitted during block=%s with event_class=%s",
-                block_events.block,
-                starknet_event.name,
-                event_class,
-            )
-            kwargs = await deserialize_starknet_event(
-                fields=event_class.__annotations__,
-                info=info,
-                block=block_events.block,
-                starknet_event=starknet_event,
-            )
-            event = event_class(**kwargs)
-
-            await event.handle(
-                info=info, block=block_events.block, starknet_event=starknet_event
-            )
-        else:
-            logger.error("Cannot find event class for %s", starknet_event)
 
 
 # pylint: disable=too-many-arguments

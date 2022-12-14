@@ -4,8 +4,8 @@ from starknet_py.contract import Contract
 from starknet_py.net.account.account_client import AccountClient
 from starknet_py.utils.data_transformer.data_transformer import CairoSerializer
 
-from indexer import utils
-from indexer.models import ProposalRawStatus
+from dao import utils
+from dao.models import ProposalRawStatus
 
 from .. import constants
 
@@ -353,6 +353,7 @@ async def test_status_updated(
 ):
     proposal_id = 0
 
+    # pylint: disable=duplicate-code
     await test_signaling(
         contract=contract,
         contract_events=contract_events,

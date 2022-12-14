@@ -3,7 +3,8 @@ from unittest.mock import Mock
 
 from pymongo import MongoClient
 
-from indexer import storage, utils
+from dao import utils
+from dao.graphql import storage
 
 from .data import data
 
@@ -46,7 +47,7 @@ def test_list_members_query(mongomock_client: MongoClient):
 
     query = {"onboardedAt": {"$lte": now}}
 
-    members = storage.list_members(info, query=query)
+    members = storage.list_members(info, filter=query)
 
     assert list(members) == onboarded_before_members
 

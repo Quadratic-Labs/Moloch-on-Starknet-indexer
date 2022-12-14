@@ -4,8 +4,10 @@ from apibara.model import EventFilter
 from click.testing import CliRunner
 from pytest import LogCaptureFixture, MonkeyPatch
 
-from indexer import graphql, indexer, utils
-from indexer.main import cli
+from dao import utils
+from dao.graphql import main as graphql_main
+from dao.indexer import main as indexer_main
+from dao.main import cli
 
 from . import config
 
@@ -39,7 +41,7 @@ def test_start_indexer(monkeypatch: MonkeyPatch, caplog: LogCaptureFixture):
     get_contract_events_mock = Mock(return_value=events)
 
     monkeypatch.setattr(utils, "get_contract", get_contract_mock)
-    monkeypatch.setattr(indexer, "run_indexer", run_indexer_mock)
+    monkeypatch.setattr(indexer_main, "run_indexer", run_indexer_mock)
     monkeypatch.setattr(utils, "get_contract_events", get_contract_events_mock)
 
     result = runner.invoke(
@@ -94,7 +96,7 @@ def test_start_graphql(monkeypatch: MonkeyPatch, caplog: LogCaptureFixture):
     runner = CliRunner()
 
     run_graphql_mock = AsyncMock()
-    monkeypatch.setattr(graphql, "run_graphql", run_graphql_mock)
+    monkeypatch.setattr(graphql_main, "run_graphql", run_graphql_mock)
 
     db_name = "some_db"
     host, port = config.GRAPHQL_URL.split(":")

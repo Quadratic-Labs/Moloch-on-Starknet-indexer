@@ -1,38 +1,17 @@
-import asyncio
-import logging
 from datetime import datetime, timedelta
-from typing import List, NewType, Optional, Type
+from typing import Optional, Type
 
 import strawberry
-from aiohttp import web
-from pymongo import MongoClient
-from strawberry.aiohttp.views import GraphQLView
 from strawberry.types import Info
 
-from . import storage, utils
-from .models import ProposalRawStatus, ProposalStatus
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
-
-
-def parse_hex(value: str) -> bytes:
-    if not value.startswith("0x"):
-        raise ValueError("invalid Hex value")
-    return bytes.fromhex(value.replace("0x", ""))
-
-
-def serialize_hex(token_id: bytes) -> str:
-    return "0x" + token_id.hex()
-
-
-HexValue = strawberry.scalar(
-    NewType("HexValue", bytes), parse_value=parse_hex, serialize=serialize_hex
-)
+from .. import utils
+from ..models import ProposalRawStatus, ProposalStatus
+from . import storage
+from .common import FromMongoMixin, HexValue
 
 
 @strawberry.interface
-class Proposal:
+class Proposal(FromMongoMixin):
     id: int
     title: str
     type: str
@@ -189,29 +168,6 @@ class Proposal:
     def memberCanVote(self, memberAddress: HexValue) -> bool:
         return True
 
-    @classmethod
-    def from_mongo(cls, data: dict):
-        logger.debug("Creating proposal from mongo: %s", data)
-
-        fields = utils.all_annotations(cls)
-
-        kwargs = {name: value for name, value in data.items() if name in fields}
-        non_kwargs = {name: value for name, value in data.items() if name not in fields}
-
-        logger.debug("Fields: %s", fields)
-        logger.debug(
-            "Creating %s with kwargs: %s, non_kwargs: %s",
-            cls.__name__,
-            kwargs,
-            non_kwargs,
-        )
-
-        proposal = cls(**kwargs)
-
-        proposal.__dict__.update(non_kwargs)
-
-        return proposal
-
 
 @strawberry.type
 class Signaling(Proposal):
@@ -262,83 +218,6 @@ PROPOSAL_TYPE_TO_CLASS: dict[str, Type[Proposal]] = {
 }
 
 
-# pylint: disable=too-few-public-methods
-@strawberry.type
-class Member:
-    memberAddress: HexValue
-    shares: int
-    loot: int
-    onboardedAt: datetime
-    yesVotes: list[HexValue] = strawberry.field(default_factory=list)
-    noVotes: list[HexValue] = strawberry.field(default_factory=list)
-
-    @classmethod
-    def from_mongo(cls, data: dict):
-        logger.debug("Creating member from mongo: %s", data)
-
-        fields = utils.all_annotations(cls)
-
-        kwargs = {name: value for name, value in data.items() if name in fields}
-        non_kwargs = {name: value for name, value in data.items() if name not in fields}
-
-        logger.debug("Fields: %s", fields)
-        logger.debug("Creating with kwargs: %s, non_kwargs: %s", kwargs, non_kwargs)
-
-        member = cls(**kwargs)
-
-        member.__dict__.update(non_kwargs)
-
-        return member
-
-
-def get_proposals(info: Info, limit: int = 10, skip: int = 0) -> List[Proposal]:
+def get_proposals(info: Info, limit: int = 10, skip: int = 0) -> list[Proposal]:
     proposals = storage.list_proposals(info=info, skip=skip, limit=limit)
     return [PROPOSAL_TYPE_TO_CLASS[doc["type"]].from_mongo(doc) for doc in proposals]
-
-
-# pylint: disable=unused-argument
-def get_members(info: Info, limit: int = 10, skip: int = 0) -> List[Member]:
-    members = storage.list_members(info=info)
-    return [Member.from_mongo(doc) for doc in members]
-
-
-@strawberry.type
-class Query:
-    proposals: List[Proposal] = strawberry.field(resolver=get_proposals)
-    members: List[Member] = strawberry.field(resolver=get_members)
-
-
-schema = strawberry.Schema(query=Query, types=list(PROPOSAL_TYPE_TO_CLASS.values()))
-
-
-class IndexerGraphQLView(GraphQLView):
-    def __init__(self, db, **kwargs):
-        super().__init__(**kwargs)
-        self._db = db
-
-    async def get_context(self, _request, _response):
-        return {"db": self._db}
-
-
-async def run_graphql(
-    mongo_url: str, db_name: str, host: str = "localhost", port: int = 8080
-):
-    mongo = MongoClient(mongo_url, tz_aware=True)
-    db = mongo[db_name]
-
-    view = IndexerGraphQLView(db, schema=schema)
-
-    logger.info(schema.as_str())
-
-    app = web.Application()
-    app.router.add_route("*", "/graphql", view)
-
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, host, port)
-    await site.start()
-
-    print(f"GraphQL server started at http://{host}:{port}/graphql")
-
-    while True:
-        await asyncio.sleep(5_000)

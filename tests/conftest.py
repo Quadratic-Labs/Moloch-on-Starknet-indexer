@@ -1,5 +1,6 @@
 # pylint: disable=redefined-outer-name,unused-argument
 import asyncio
+import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime
@@ -12,7 +13,7 @@ import pymongo
 import pytest
 import requests
 from apibara import EventFilter
-from pytest import MonkeyPatch
+from pytest import Item, MonkeyPatch
 from python_on_whales import Container
 from starknet_py.compile.compiler import Compiler
 from starknet_py.contract import Contract
@@ -21,8 +22,8 @@ from starknet_py.net.gateway_client import GatewayClient
 from starknet_py.net.models import StarknetChainId
 from starknet_py.net.signer.stark_curve_signer import KeyPair
 
-from indexer.graphql import run_graphql
-from indexer.indexer import run_indexer
+from dao.graphql.main import run_graphql
+from dao.indexer.main import run_indexer
 
 from . import config
 from .integration.test_utils import (
@@ -32,6 +33,24 @@ from .integration.test_utils import (
     wait_for_devnet,
     wait_for_docker_services,
 )
+
+
+# TODO: move the logs configuration to a config file
+def disable_annoying_debug_loggers():
+    loggers_names = ["grpc", "grpc_requests.aio", "apibara", "asyncio"]
+    for logger_name in loggers_names:
+        logging.getLogger(logger_name).setLevel(logging.INFO)
+
+
+def pytest_sessionstart():
+    disable_annoying_debug_loggers()
+
+
+def pytest_collection_modifyitems(items: list[Item]):
+    """Mark all tests that uses docker services as slow"""
+    for item in items:
+        if "docker_compose_services" in getattr(item, "fixturenames", ()):
+            item.add_marker("slow")
 
 
 @dataclass
@@ -203,7 +222,9 @@ def run_indexer_process(
         filters: list[EventFilter], new_events_handler=default_new_events_handler_test
     ) -> Indexer:
         indexer_id = (
-            request.node.name + "_" + datetime.now().strftime("%Y_%m_%d_%H_%I_%M_%f")
+            request.function.__name__
+            + "_"
+            + datetime.now().strftime("%Y_%m_%d_%H_%I_%M_%f")
         )
         process = Process(
             target=lambda: asyncio.run(
