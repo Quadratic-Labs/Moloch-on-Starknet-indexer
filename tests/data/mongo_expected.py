@@ -1,4 +1,5 @@
 from . import common
+from .members import MEMBERS
 
 LIST_PROPOSALS = [
     {
@@ -16,49 +17,13 @@ LIST_PROPOSALS = [
         "quorum": 80,
         "yesVoters": [common.ADDRESSES[0].bytes, common.ADDRESSES[1].bytes],
         "yesVotersMembers": [
-            {
-                "memberAddress": common.ADDRESSES[0].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 7,
-                "loot": 5,
-                "balances": [
-                    {
-                        "tokenAddress": common.TOKEN_ADDRESS.bytes,
-                        "tokenName": common.TOKEN_NAME,
-                        "amount": common.AMOUNT,
-                    }
-                ],
-                "transactions": [
-                    {
-                        "tokenAddress": common.TOKEN_ADDRESS.bytes,
-                        "timestamp": common.START_TIME,
-                        "amount": common.AMOUNT,
-                    }
-                ],
-            },
-            {
-                "memberAddress": common.ADDRESSES[1].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 8,
-                "loot": 5,
-                "balances": [],
-                "transactions": [],
-            },
+            MEMBERS[0].copy(),
+            MEMBERS[1].copy(),
         ],
         "noVoters": [common.ADDRESSES[2].bytes, common.ADDRESSES[3].bytes],
         "noVotersMembers": [
-            {
-                "memberAddress": common.ADDRESSES[2].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 2,
-                "loot": 5,
-            },
-            {
-                "memberAddress": common.ADDRESSES[3].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 3,
-                "loot": 5,
-            },
+            MEMBERS[2].copy(),
+            MEMBERS[3].copy(),
         ],
     },
     {
@@ -81,49 +46,13 @@ LIST_PROPOSALS = [
         "quorum": 80,
         "yesVoters": [common.ADDRESSES[0].bytes, common.ADDRESSES[1].bytes],
         "yesVotersMembers": [
-            {
-                "memberAddress": common.ADDRESSES[0].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 7,
-                "loot": 5,
-                "balances": [
-                    {
-                        "tokenAddress": common.TOKEN_ADDRESS.bytes,
-                        "tokenName": common.TOKEN_NAME,
-                        "amount": common.AMOUNT,
-                    }
-                ],
-                "transactions": [
-                    {
-                        "tokenAddress": common.TOKEN_ADDRESS.bytes,
-                        "timestamp": common.START_TIME,
-                        "amount": common.AMOUNT,
-                    }
-                ],
-            },
-            {
-                "memberAddress": common.ADDRESSES[1].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 8,
-                "loot": 5,
-                "balances": [],
-                "transactions": [],
-            },
+            MEMBERS[0].copy(),
+            MEMBERS[1].copy(),
         ],
         "noVoters": [common.ADDRESSES[2].bytes, common.ADDRESSES[3].bytes],
         "noVotersMembers": [
-            {
-                "memberAddress": common.ADDRESSES[2].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 2,
-                "loot": 5,
-            },
-            {
-                "memberAddress": common.ADDRESSES[3].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 3,
-                "loot": 5,
-            },
+            MEMBERS[2].copy(),
+            MEMBERS[3].copy(),
         ],
     },
     {
@@ -142,49 +71,13 @@ LIST_PROPOSALS = [
         "quorum": 80,
         "yesVoters": [common.ADDRESSES[0].bytes, common.ADDRESSES[1].bytes],
         "yesVotersMembers": [
-            {
-                "memberAddress": common.ADDRESSES[0].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 7,
-                "loot": 5,
-                "balances": [
-                    {
-                        "tokenAddress": common.TOKEN_ADDRESS.bytes,
-                        "tokenName": common.TOKEN_NAME,
-                        "amount": common.AMOUNT,
-                    }
-                ],
-                "transactions": [
-                    {
-                        "tokenAddress": common.TOKEN_ADDRESS.bytes,
-                        "timestamp": common.START_TIME,
-                        "amount": common.AMOUNT,
-                    }
-                ],
-            },
-            {
-                "memberAddress": common.ADDRESSES[1].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 8,
-                "loot": 5,
-                "balances": [],
-                "transactions": [],
-            },
+            MEMBERS[0].copy(),
+            MEMBERS[1].copy(),
         ],
         "noVoters": [common.ADDRESSES[2].bytes, common.ADDRESSES[3].bytes],
         "noVotersMembers": [
-            {
-                "memberAddress": common.ADDRESSES[2].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 2,
-                "loot": 5,
-            },
-            {
-                "memberAddress": common.ADDRESSES[3].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 3,
-                "loot": 5,
-            },
+            MEMBERS[2].copy(),
+            MEMBERS[3].copy(),
         ],
     },
     {
@@ -204,49 +97,13 @@ LIST_PROPOSALS = [
         "quorum": 80,
         "yesVoters": [common.ADDRESSES[0].bytes, common.ADDRESSES[1].bytes],
         "yesVotersMembers": [
-            {
-                "memberAddress": common.ADDRESSES[0].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 7,
-                "loot": 5,
-                "balances": [
-                    {
-                        "tokenAddress": common.TOKEN_ADDRESS.bytes,
-                        "tokenName": common.TOKEN_NAME,
-                        "amount": common.AMOUNT,
-                    }
-                ],
-                "transactions": [
-                    {
-                        "tokenAddress": common.TOKEN_ADDRESS.bytes,
-                        "timestamp": common.START_TIME,
-                        "amount": common.AMOUNT,
-                    }
-                ],
-            },
-            {
-                "memberAddress": common.ADDRESSES[1].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 8,
-                "loot": 5,
-                "balances": [],
-                "transactions": [],
-            },
+            MEMBERS[0].copy(),
+            MEMBERS[1].copy(),
         ],
         "noVoters": [common.ADDRESSES[2].bytes, common.ADDRESSES[3].bytes],
         "noVotersMembers": [
-            {
-                "memberAddress": common.ADDRESSES[2].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 2,
-                "loot": 5,
-            },
-            {
-                "memberAddress": common.ADDRESSES[3].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 3,
-                "loot": 5,
-            },
+            MEMBERS[2].copy(),
+            MEMBERS[3].copy(),
         ],
     },
     {
@@ -266,49 +123,13 @@ LIST_PROPOSALS = [
         "quorum": 80,
         "yesVoters": [common.ADDRESSES[0].bytes, common.ADDRESSES[1].bytes],
         "yesVotersMembers": [
-            {
-                "memberAddress": common.ADDRESSES[0].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 7,
-                "loot": 5,
-                "balances": [
-                    {
-                        "tokenAddress": common.TOKEN_ADDRESS.bytes,
-                        "tokenName": common.TOKEN_NAME,
-                        "amount": common.AMOUNT,
-                    }
-                ],
-                "transactions": [
-                    {
-                        "tokenAddress": common.TOKEN_ADDRESS.bytes,
-                        "timestamp": common.START_TIME,
-                        "amount": common.AMOUNT,
-                    }
-                ],
-            },
-            {
-                "memberAddress": common.ADDRESSES[1].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 8,
-                "loot": 5,
-                "balances": [],
-                "transactions": [],
-            },
+            MEMBERS[0].copy(),
+            MEMBERS[1].copy(),
         ],
         "noVoters": [common.ADDRESSES[2].bytes, common.ADDRESSES[3].bytes],
         "noVotersMembers": [
-            {
-                "memberAddress": common.ADDRESSES[2].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 2,
-                "loot": 5,
-            },
-            {
-                "memberAddress": common.ADDRESSES[3].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 3,
-                "loot": 5,
-            },
+            MEMBERS[2].copy(),
+            MEMBERS[3].copy(),
         ],
     },
     {
@@ -330,49 +151,13 @@ LIST_PROPOSALS = [
         "quorum": 80,
         "yesVoters": [common.ADDRESSES[0].bytes, common.ADDRESSES[1].bytes],
         "yesVotersMembers": [
-            {
-                "memberAddress": common.ADDRESSES[0].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 7,
-                "loot": 5,
-                "balances": [
-                    {
-                        "tokenAddress": common.TOKEN_ADDRESS.bytes,
-                        "tokenName": common.TOKEN_NAME,
-                        "amount": common.AMOUNT,
-                    }
-                ],
-                "transactions": [
-                    {
-                        "tokenAddress": common.TOKEN_ADDRESS.bytes,
-                        "timestamp": common.START_TIME,
-                        "amount": common.AMOUNT,
-                    }
-                ],
-            },
-            {
-                "memberAddress": common.ADDRESSES[1].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 8,
-                "loot": 5,
-                "balances": [],
-                "transactions": [],
-            },
+            MEMBERS[0].copy(),
+            MEMBERS[1].copy(),
         ],
         "noVoters": [common.ADDRESSES[2].bytes, common.ADDRESSES[3].bytes],
         "noVotersMembers": [
-            {
-                "memberAddress": common.ADDRESSES[2].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 2,
-                "loot": 5,
-            },
-            {
-                "memberAddress": common.ADDRESSES[3].bytes,
-                "onboardedAt": common.START_TIME,
-                "shares": 3,
-                "loot": 5,
-            },
+            MEMBERS[2].copy(),
+            MEMBERS[3].copy(),
         ],
     },
 ]
