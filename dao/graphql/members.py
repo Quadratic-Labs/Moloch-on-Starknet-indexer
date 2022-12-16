@@ -17,6 +17,7 @@ class Member(FromMongoMixin):
     noVotes: list[HexValue] = strawberry.field(default_factory=list)
     balances: list[Balance] = strawberry.field(default_factory=list)
     transactions: list[Transaction] = strawberry.field(default_factory=list)
+    roles: list[str] = strawberry.field(default_factory=list)
 
     @classmethod
     def from_mongo(cls, data: dict):

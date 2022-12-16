@@ -72,6 +72,7 @@ LIST_MEMBERS = """query Proposals {
     shares
     loot
     onboardedAt
+    roles
     balances {
       tokenName
       tokenAddress

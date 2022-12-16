@@ -286,6 +286,7 @@ LIST_MEMBERS = [
                 "amount": common.AMOUNT,
             }
         ],
+        "roles": [],
     },
     {
         "memberAddress": common.ADDRESSES[1].string,
@@ -294,6 +295,7 @@ LIST_MEMBERS = [
         "loot": 5,
         "balances": [],
         "transactions": [],
+        "roles": [],
     },
     {
         "memberAddress": common.ADDRESSES[2].string,
@@ -302,6 +304,7 @@ LIST_MEMBERS = [
         "loot": 5,
         "balances": [],
         "transactions": [],
+        "roles": ["admin"],
     },
     {
         "memberAddress": common.ADDRESSES[3].string,
@@ -310,6 +313,7 @@ LIST_MEMBERS = [
         "loot": 5,
         "balances": [],
         "transactions": [],
+        "roles": ["admin", "govern"],
     },
     {
         "memberAddress": common.ADDRESSES[4].string,
@@ -318,5 +322,6 @@ LIST_MEMBERS = [
         "loot": 5,
         "balances": [],
         "transactions": [],
+        "roles": [],
     },
 ]

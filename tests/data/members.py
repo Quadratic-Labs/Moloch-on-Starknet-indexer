@@ -28,18 +28,21 @@ MEMBERS = [
         "loot": 5,
         "balances": [],
         "transactions": [],
+        "roles": [],
     },
     {
         "memberAddress": common.ADDRESSES[2].bytes,
         "onboardedAt": common.START_TIME,
         "shares": 2,
         "loot": 5,
+        "roles": ["admin"],
     },
     {
         "memberAddress": common.ADDRESSES[3].bytes,
         "onboardedAt": common.START_TIME,
         "shares": 3,
         "loot": 5,
+        "roles": ["admin", "govern"],
     },
     {
         "memberAddress": common.ADDRESSES[4].bytes,
