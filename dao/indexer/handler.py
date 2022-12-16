@@ -25,6 +25,8 @@ ALL_EVENTS: dict[str, Type[BaseEvent]] = {
     "TokenUnWhitelisted": bank.TokenUnWhitelisted,
     "UserTokenBalanceIncreased": bank.UserTokenBalanceIncreased,
     "UserTokenBalanceDecreased": bank.UserTokenBalanceDecreased,
+    "RoleGranted": members.RoleGranted,
+    "RoleRevoked": members.RoleRevoked,
 }
 
 

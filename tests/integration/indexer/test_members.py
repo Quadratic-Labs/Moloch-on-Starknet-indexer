@@ -108,3 +108,103 @@ async def test_member_updated(
     assert member["jailed"] == jailed
     assert member["loot"] == loot
     assert member["onboardedAt"] == onboarded_at_block_timestamp
+
+
+async def test_role_granted(
+    run_indexer_process: IndexerProcessRunner,
+    contract: Contract,
+    contract_events: dict,
+    client: AccountClient,
+    mongo_client: pymongo.MongoClient,
+    address=0x363B71D002935E7822EC0B1BAF02EE90D64F3458939B470E3E629390436510B,
+    role="admin",
+):
+    filters = [
+        EventFilter.from_event_name(
+            name="MemberAdded",
+            address=contract.address,
+        ),
+        EventFilter.from_event_name(
+            name="RoleGranted",
+            address=contract.address,
+        ),
+    ]
+
+    indexer = run_indexer_process(filters, default_new_events_handler)
+
+    transaction_receipt = await test_members.test_role_granted(
+        contract=contract,
+        contract_events=contract_events,
+        client=client,
+        address=address,
+        role=role,
+    )
+
+    mongo_db = mongo_client[indexer.id]
+    # Wait for the indexer to reach the transaction block_number to be sure
+    # our events were processed
+    test_utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
+
+    members = list(mongo_db["members"].find({"_chain.valid_to": None}))
+    assert len(members) == 1
+
+    member = members[0]
+
+    assert member["memberAddress"] == utils.int_to_bytes(address)
+    assert member["roles"] == [role]
+
+
+async def test_role_revoked(
+    run_indexer_process: IndexerProcessRunner,
+    contract: Contract,
+    contract_events: dict,
+    client: AccountClient,
+    mongo_client: pymongo.MongoClient,
+    address=0x363B71D002935E7822EC0B1BAF02EE90D64F3458939B470E3E629390436510B,
+    role="admin",
+):
+    filters = [
+        EventFilter.from_event_name(
+            name="MemberAdded",
+            address=contract.address,
+        ),
+        EventFilter.from_event_name(
+            name="RoleGranted",
+            address=contract.address,
+        ),
+        EventFilter.from_event_name(
+            name="RoleRevoked",
+            address=contract.address,
+        ),
+    ]
+
+    indexer = run_indexer_process(filters, default_new_events_handler)
+
+    await test_members.test_role_granted(
+        contract=contract,
+        contract_events=contract_events,
+        client=client,
+        address=address,
+        role=role,
+    )
+
+    transaction_receipt = await test_members.test_role_revoked(
+        contract=contract,
+        contract_events=contract_events,
+        client=client,
+        address=address,
+        role=role,
+    )
+
+    mongo_db = mongo_client[indexer.id]
+    # Wait for the indexer to reach the transaction block_number to be sure
+    # our events were processed
+    test_utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
+
+    members = list(mongo_db["members"].find({"_chain.valid_to": None}))
+    assert len(members) == 1
+
+    member = members[0]
+
+    assert member["memberAddress"] == utils.int_to_bytes(address)
+    assert member["roles"] == []

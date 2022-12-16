@@ -74,3 +74,39 @@ class MemberUpdated(BaseEvent):
             update={"$set": asdict(self)},
             info=info,
         )
+
+
+@dataclass
+class RoleGranted(BaseEvent):
+    # TODO: rename account to memberAddress and sender to senderAddress or granteeAddress
+    account: bytes
+    role: str
+    sender: bytes
+
+    async def _handle(
+        self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
+    ):
+        # TODO: add roles history
+        return await storage.update_member(
+            member_address=self.account,
+            update={"$push": {"roles": self.role}},
+            info=info,
+        )
+
+
+@dataclass
+class RoleRevoked(BaseEvent):
+    # TODO: rename account to memberAddress and sender to senderAddress or granteeAddress
+    account: bytes
+    role: str
+    sender: bytes
+
+    async def _handle(
+        self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
+    ):
+        # TODO: add roles history
+        return await storage.update_member(
+            member_address=self.account,
+            update={"$pull": {"roles": self.role}},
+            info=info,
+        )
