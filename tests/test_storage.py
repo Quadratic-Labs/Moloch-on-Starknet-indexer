@@ -6,7 +6,7 @@ from pymongo import MongoClient
 from dao import utils
 from dao.graphql import storage
 
-from .data import data
+from . import data
 
 
 def test_list_members(mongomock_client: MongoClient):
@@ -297,4 +297,4 @@ def test_list_proposals(mongomock_client: MongoClient):
         for member in proposal["yesVotersMembers"] + proposal["noVotersMembers"]:
             del member["_id"]
 
-    assert proposals == data.LIST_PROPOSALS_MONGO_QUERY_EXPECTED_RESULT
+    assert proposals == data.mongo_expected.LIST_PROPOSALS
