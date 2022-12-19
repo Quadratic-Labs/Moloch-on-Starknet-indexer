@@ -54,7 +54,12 @@ class MemberAdded(BaseEvent):
     async def _handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
-        await info.storage.insert_one("members", asdict(self))
+        member_dict = {
+            **asdict(self),
+            "jailedAt": None,
+            "exitedAt": None,
+        }
+        await info.storage.insert_one("members", member_dict)
 
 
 @dataclass

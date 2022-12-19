@@ -6,6 +6,8 @@ MEMBERS = [
         "onboardedAt": common.START_TIME,
         "shares": 7,
         "loot": 5,
+        "jailedAt": None,
+        "exitedAt": None,
         "balances": [
             {
                 "tokenAddress": common.TOKEN_ADDRESS.bytes,
@@ -26,6 +28,8 @@ MEMBERS = [
         "onboardedAt": common.START_TIME,
         "shares": 8,
         "loot": 5,
+        "jailedAt": common.VOTING_PERIOD_ENDING_AT,
+        "exitedAt": None,
         "balances": [],
         "transactions": [],
         "roles": [],
@@ -35,6 +39,8 @@ MEMBERS = [
         "onboardedAt": common.START_TIME,
         "shares": 2,
         "loot": 2,
+        "jailedAt": None,
+        "exitedAt": common.VOTING_PERIOD_ENDING_AT,
         "roles": ["admin"],
     },
     {
@@ -42,6 +48,8 @@ MEMBERS = [
         "onboardedAt": common.START_TIME,
         "shares": 3,
         "loot": 3,
+        "jailedAt": common.VOTING_PERIOD_ENDING_AT,
+        "exitedAt": common.VOTING_PERIOD_ENDING_AT,
         "roles": ["admin", "govern"],
     },
     {

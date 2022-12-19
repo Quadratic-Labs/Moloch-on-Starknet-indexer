@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 import strawberry
 from strawberry.types import Info
@@ -18,6 +19,8 @@ class Member(FromMongoMixin):
     balances: list[Balance] = strawberry.field(default_factory=list)
     transactions: list[Transaction] = strawberry.field(default_factory=list)
     roles: list[str] = strawberry.field(default_factory=list)
+    jailedAt: Optional[datetime] = None
+    exitedAt: Optional[datetime] = None
 
     @strawberry.field
     def percentageOfTreasury(self, info) -> float:

@@ -75,6 +75,8 @@ LIST_MEMBERS = """query Proposals {
     votingWeight
     onboardedAt
     roles
+    jailedAt
+    exitedAt
     balances {
       tokenName
       tokenAddress

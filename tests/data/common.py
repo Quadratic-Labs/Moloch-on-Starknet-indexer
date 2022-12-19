@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 
 START_TIME = datetime(2022, 11, 18, 0, 0, 0, tzinfo=timezone.utc)
+VOTING_PERIOD_ENDING_AT = datetime(2022, 11, 18, 1, 0, 0, tzinfo=timezone.utc)
 
 # ISO format
 START_TIME_STRING = "2022-11-18T00:00:00+00:00"
