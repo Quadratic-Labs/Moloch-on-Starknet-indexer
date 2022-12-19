@@ -11,6 +11,7 @@ from .common import Balance, FromMongoMixin, HexValue, Transaction
 @strawberry.type
 class Member(FromMongoMixin):
     memberAddress: HexValue
+    delegateAddress: Optional[HexValue] = None
     shares: int
     loot: int
     onboardedAt: datetime

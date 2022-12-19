@@ -271,6 +271,7 @@ LIST_PROPOSALS = [
 LIST_MEMBERS = [
     {
         "memberAddress": common.ADDRESSES[0].string,
+        "delegateAddress": common.ADDRESSES[1].string,
         "onboardedAt": common.START_TIME_STRING,
         "shares": 7,
         "loot": 5,
@@ -296,6 +297,7 @@ LIST_MEMBERS = [
     },
     {
         "memberAddress": common.ADDRESSES[1].string,
+        "delegateAddress": common.ADDRESSES[0].string,
         "onboardedAt": common.START_TIME_STRING,
         "shares": 8,
         "loot": 5,
@@ -309,6 +311,7 @@ LIST_MEMBERS = [
     },
     {
         "memberAddress": common.ADDRESSES[2].string,
+        "delegateAddress": None,
         "onboardedAt": common.START_TIME_STRING,
         "shares": 2,
         "loot": 2,
@@ -322,6 +325,7 @@ LIST_MEMBERS = [
     },
     {
         "memberAddress": common.ADDRESSES[3].string,
+        "delegateAddress": None,
         "onboardedAt": common.START_TIME_STRING,
         "shares": 3,
         "loot": 3,
@@ -335,6 +339,7 @@ LIST_MEMBERS = [
     },
     {
         "memberAddress": common.ADDRESSES[4].string,
+        "delegateAddress": None,
         "onboardedAt": common.START_TIME_STRING,
         "shares": 5,
         "loot": 0,

@@ -1,6 +1,7 @@
 from . import common
 from .members import MEMBERS
 
+# We call dict.copy() because pymongo insert queries adds _id field to the dicts
 LIST_PROPOSALS = [
     {
         "id": 0,

@@ -3,6 +3,7 @@ from . import common
 MEMBERS = [
     {
         "memberAddress": common.ADDRESSES[0].bytes,
+        "delegateAddress": common.ADDRESSES[1].bytes,
         "onboardedAt": common.START_TIME,
         "shares": 7,
         "loot": 5,
@@ -25,6 +26,7 @@ MEMBERS = [
     },
     {
         "memberAddress": common.ADDRESSES[1].bytes,
+        "delegateAddress": common.ADDRESSES[0].bytes,
         "onboardedAt": common.START_TIME,
         "shares": 8,
         "loot": 5,

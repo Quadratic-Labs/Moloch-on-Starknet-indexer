@@ -69,6 +69,7 @@ LIST_PROPOSALS = """query Proposals {
 LIST_MEMBERS = """query Proposals {
   members {
     memberAddress
+    delegateAddress
     shares
     loot
     percentageOfTreasury
