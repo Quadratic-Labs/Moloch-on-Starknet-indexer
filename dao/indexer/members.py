@@ -3,6 +3,7 @@ from dataclasses import asdict, dataclass
 from apibara import Info
 from apibara.model import BlockHeader, StarkNetEvent
 
+from dao import utils
 from dao.indexer import storage
 from dao.indexer.base_event import BaseEvent
 from dao.indexer.deserializer import BlockNumber
@@ -69,9 +70,17 @@ class MemberUpdated(BaseEvent):
     async def _handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
+        update_data = asdict(self)
+
+        block_datetime = utils.get_block_datetime_utc(block)
+
+        # TODO: keep history of jailed and exited
+        update_data["jailedAt"] = block_datetime if self.jailed else None
+        update_data["exitedAt"] = block_datetime if not self.shares else None
+
         return await storage.update_member(
             member_address=self.memberAddress,
-            update={"$set": asdict(self)},
+            update={"$set": update_data},
             info=info,
         )
 

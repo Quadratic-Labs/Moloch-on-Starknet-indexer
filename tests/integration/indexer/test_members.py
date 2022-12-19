@@ -1,5 +1,6 @@
 # pylint: disable=too-many-arguments,too-many-locals
 import pymongo
+import pytest
 from apibara import EventFilter
 from starknet_py.contract import Contract
 from starknet_py.net.account.account_client import AccountClient
@@ -47,9 +48,14 @@ async def test_member_added(
     assert member["onboardedAt"] == block_datetime
     assert member["shares"] == 1
     assert member["loot"] == 50
+    assert member["jailedAt"] is None
+    assert member["exitedAt"] is None
 
 
+@pytest.mark.parametrize("shares, jailed", [(50, 0), (0, 0)])
 async def test_member_updated(
+    shares,
+    jailed,
     run_indexer_process: IndexerProcessRunner,
     contract: Contract,
     contract_events: dict,
@@ -57,9 +63,7 @@ async def test_member_updated(
     mongo_client: pymongo.MongoClient,
     address=0x363B71D002935E7822EC0B1BAF02EE90D64F3458939B470E3E629390436510B,
     delegateAddress=0x363B71D002935E7822EC0B1BAF02EE90D64F3458939B470E3E629390436510B,
-    shares=42,
     loot=42,
-    jailed=0,
     lastProposalYesVote=3,
     onboardedAt=2,
 ):
@@ -88,6 +92,8 @@ async def test_member_updated(
         lastProposalYesVote=lastProposalYesVote,
         onboardedAt=onboardedAt,
     )
+    block = await client.get_block(block_number=transaction_receipt.block_number)
+    bock_timestamp = utils.get_block_datetime_utc(block)
 
     onboarded_at_block = await client.get_block(block_number=onboardedAt)
     onboarded_at_block_timestamp = utils.get_block_datetime_utc(onboarded_at_block)
@@ -108,6 +114,8 @@ async def test_member_updated(
     assert member["jailed"] == jailed
     assert member["loot"] == loot
     assert member["onboardedAt"] == onboarded_at_block_timestamp
+    assert member["jailedAt"] == (bock_timestamp if jailed else None)
+    assert member["exitedAt"] == (bock_timestamp if not shares else None)
 
 
 async def test_role_granted(
