@@ -28,6 +28,8 @@ class Bank(FromMongoMixin):
     unWhitelistedTokens: list[UnWhitelistedToken]
     balances: list[Balance]
     transactions: list[Transaction]
+    totalShares: int = 0
+    totalLoot: int = 0
 
     @classmethod
     def from_mongo(cls, data: dict):

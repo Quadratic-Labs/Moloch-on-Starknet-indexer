@@ -53,6 +53,7 @@ def test_bank_query(mongomock_client: MongoClient):
     context_value = {"db": mongomock_client.db}
 
     mongomock_client.db.bank.insert_one(data.BANK)
+    mongomock_client.db.members.insert_many(data.MEMBERS)
 
     result = schema.execute_sync(data.graphql_queries.BANK, context_value=context_value)
 

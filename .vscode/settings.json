@@ -26,4 +26,7 @@
     "black-formatter.args": [
         "--preview"
     ],
+    "files.exclude": {
+        "coverage_html_report": true
+    },
 }

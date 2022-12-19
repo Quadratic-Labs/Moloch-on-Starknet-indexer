@@ -1,7 +1,10 @@
 from . import common
+from .members import MEMBERS
 
 BANK = {
     "bankAddress": common.BANK_ADDRESS.string,
+    "totalShares": sum(member["shares"] for member in MEMBERS),
+    "totalLoot": sum(member["loot"] for member in MEMBERS),
     "whitelistedTokens": [
         {
             "tokenName": common.TOKEN_NAME,
@@ -301,7 +304,7 @@ LIST_MEMBERS = [
         "memberAddress": common.ADDRESSES[2].string,
         "onboardedAt": common.START_TIME_STRING,
         "shares": 2,
-        "loot": 5,
+        "loot": 2,
         "balances": [],
         "transactions": [],
         "roles": ["admin"],
@@ -310,7 +313,7 @@ LIST_MEMBERS = [
         "memberAddress": common.ADDRESSES[3].string,
         "onboardedAt": common.START_TIME_STRING,
         "shares": 3,
-        "loot": 5,
+        "loot": 3,
         "balances": [],
         "transactions": [],
         "roles": ["admin", "govern"],
@@ -319,7 +322,7 @@ LIST_MEMBERS = [
         "memberAddress": common.ADDRESSES[4].string,
         "onboardedAt": common.START_TIME_STRING,
         "shares": 5,
-        "loot": 5,
+        "loot": 0,
         "balances": [],
         "transactions": [],
         "roles": [],

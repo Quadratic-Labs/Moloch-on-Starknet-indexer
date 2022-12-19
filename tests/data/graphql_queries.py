@@ -90,6 +90,8 @@ LIST_MEMBERS = """query Proposals {
 BANK = """query Bank {
   bank {
     bankAddress
+    totalShares
+    totalLoot
     whitelistedTokens {
       tokenName
       tokenAddress
