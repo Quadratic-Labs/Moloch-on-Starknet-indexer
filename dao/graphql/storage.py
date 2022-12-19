@@ -34,12 +34,14 @@ def get_votable_members_query(
             {
                 "$or": [
                     {"jailedAt": {"$exists": False}},
+                    {"jailedAt": None},
                     {"jailedAt": {"$gt": submitted_at}},
                 ]
             },
             {
                 "$or": [
                     {"exitedAt": {"$exists": False}},
+                    {"exitedAt": None},
                     {"exitedAt": {"$gt": submitted_at}},
                 ]
             },

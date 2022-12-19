@@ -136,6 +136,15 @@ def test_list_votable_members_jailed_at(mongomock_client: MongoClient):
             "onboardedAt": submitted_at + timedelta(days=3),
             "jailedAt": voting_period_ending_at + timedelta(days=1),
         },
+        {
+            "memberAddress": "0x8",
+            "onboardedAt": submitted_at + timedelta(days=3),
+            "jailedAt": None,
+        },
+        {
+            "memberAddress": "0x9",
+            "onboardedAt": submitted_at + timedelta(days=3),
+        },
     ]
 
     non_votable_members = [
@@ -189,6 +198,15 @@ def test_list_votable_members_exited_at(mongomock_client: MongoClient):
             "memberAddress": "0x3",
             "onboardedAt": submitted_at + timedelta(days=3),
             "exitedAt": voting_period_ending_at + timedelta(days=1),
+        },
+        {
+            "memberAddress": "0x8",
+            "onboardedAt": submitted_at + timedelta(days=3),
+            "exitedAt": None,
+        },
+        {
+            "memberAddress": "0x9",
+            "onboardedAt": submitted_at + timedelta(days=3),
         },
     ]
 
@@ -246,6 +264,22 @@ def test_list_votable_members_jailed_at_and_exited_at(mongomock_client: MongoCli
             "onboardedAt": submitted_at + timedelta(days=3),
             "jailedAt": voting_period_ending_at,
             "exitedAt": voting_period_ending_at + timedelta(days=1),
+        },
+        {
+            "memberAddress": "0x8",
+            "onboardedAt": submitted_at + timedelta(days=3),
+            "jailedAt": None,
+            "exitedAt": voting_period_ending_at + timedelta(days=1),
+        },
+        {
+            "memberAddress": "0x9",
+            "onboardedAt": submitted_at + timedelta(days=3),
+            "jailedAt": voting_period_ending_at,
+            "exitedAt": None,
+        },
+        {
+            "memberAddress": "0x10",
+            "onboardedAt": submitted_at + timedelta(days=3),
         },
     ]
 
