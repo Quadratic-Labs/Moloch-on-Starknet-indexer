@@ -71,6 +71,8 @@ LIST_MEMBERS = """query Proposals {
     memberAddress
     shares
     loot
+    percentageOfTreasury
+    votingWeight
     onboardedAt
     roles
     balances {

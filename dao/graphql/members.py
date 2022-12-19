@@ -19,6 +19,18 @@ class Member(FromMongoMixin):
     transactions: list[Transaction] = strawberry.field(default_factory=list)
     roles: list[str] = strawberry.field(default_factory=list)
 
+    @strawberry.field
+    def percentageOfTreasury(self, info) -> float:
+        bank = storage.get_bank(info)
+        total = bank.get("totalShares", 0) + bank.get("totalLoot", 0)
+        return (self.shares + self.loot) / total
+
+    @strawberry.field
+    def votingWeight(self, info) -> float:
+        bank = storage.get_bank(info)
+        totalShares = bank.get("totalShares", 0)
+        return self.shares / totalShares
+
     @classmethod
     def from_mongo(cls, data: dict):
         data["balances"] = [Balance(**balance) for balance in data.get("balances", [])]

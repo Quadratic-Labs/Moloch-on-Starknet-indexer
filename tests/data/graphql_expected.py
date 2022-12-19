@@ -1,10 +1,9 @@
 from . import common
-from .members import MEMBERS
 
 BANK = {
     "bankAddress": common.BANK_ADDRESS.string,
-    "totalShares": sum(member["shares"] for member in MEMBERS),
-    "totalLoot": sum(member["loot"] for member in MEMBERS),
+    "totalShares": 25,
+    "totalLoot": 15,
     "whitelistedTokens": [
         {
             "tokenName": common.TOKEN_NAME,
@@ -275,6 +274,8 @@ LIST_MEMBERS = [
         "onboardedAt": common.START_TIME_STRING,
         "shares": 7,
         "loot": 5,
+        "percentageOfTreasury": 0.30,
+        "votingWeight": 0.28,
         "balances": [
             {
                 "tokenName": common.TOKEN_NAME,
@@ -296,6 +297,8 @@ LIST_MEMBERS = [
         "onboardedAt": common.START_TIME_STRING,
         "shares": 8,
         "loot": 5,
+        "percentageOfTreasury": 0.325,
+        "votingWeight": 0.32,
         "balances": [],
         "transactions": [],
         "roles": [],
@@ -305,6 +308,8 @@ LIST_MEMBERS = [
         "onboardedAt": common.START_TIME_STRING,
         "shares": 2,
         "loot": 2,
+        "percentageOfTreasury": 0.1,
+        "votingWeight": 0.08,
         "balances": [],
         "transactions": [],
         "roles": ["admin"],
@@ -314,6 +319,8 @@ LIST_MEMBERS = [
         "onboardedAt": common.START_TIME_STRING,
         "shares": 3,
         "loot": 3,
+        "percentageOfTreasury": 0.15,
+        "votingWeight": 0.12,
         "balances": [],
         "transactions": [],
         "roles": ["admin", "govern"],
@@ -323,6 +330,8 @@ LIST_MEMBERS = [
         "onboardedAt": common.START_TIME_STRING,
         "shares": 5,
         "loot": 0,
+        "percentageOfTreasury": 0.125,
+        "votingWeight": 0.2,
         "balances": [],
         "transactions": [],
         "roles": [],
