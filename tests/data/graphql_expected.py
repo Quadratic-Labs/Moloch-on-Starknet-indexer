@@ -6,8 +6,8 @@ BANK = {
     "totalLoot": 15,
     "whitelistedTokens": [
         {
-            "tokenName": common.TOKEN_NAME,
-            "tokenAddress": common.TOKEN_ADDRESS.string,
+            "tokenName": common.ANOTHER_TOKEN_NAME,
+            "tokenAddress": common.ANOTHER_TOKEN_ADDRESS.string,
             "whitelistedAt": common.START_TIME_STRING,
         }
     ],

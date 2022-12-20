@@ -37,12 +37,20 @@ class Bank(FromMongoMixin):
         data["transactions"] = [
             Transaction(**transaction) for transaction in data.get("transactions", [])
         ]
-        data["whitelistedTokens"] = [
-            WhitelistedToken(**token) for token in data["whitelistedTokens"]
+
+        unwhitelisted_addresses = [
+            token["tokenAddress"] for token in data["unWhitelistedTokens"]
         ]
+        data["whitelistedTokens"] = [
+            WhitelistedToken(**token)
+            for token in data["whitelistedTokens"]
+            if token["tokenAddress"] not in unwhitelisted_addresses
+        ]
+
         data["unWhitelistedTokens"] = [
             UnWhitelistedToken(**token) for token in data["unWhitelistedTokens"]
         ]
+
         return super().from_mongo(data)
 
 

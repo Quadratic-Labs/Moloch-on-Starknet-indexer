@@ -7,7 +7,12 @@ BANK = {
             "tokenName": common.TOKEN_NAME,
             "tokenAddress": common.TOKEN_ADDRESS.bytes,
             "whitelistedAt": common.START_TIME,
-        }
+        },
+        {
+            "tokenName": common.ANOTHER_TOKEN_NAME,
+            "tokenAddress": common.ANOTHER_TOKEN_ADDRESS.bytes,
+            "whitelistedAt": common.START_TIME,
+        },
     ],
     "unWhitelistedTokens": [
         {
