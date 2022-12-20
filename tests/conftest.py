@@ -22,10 +22,10 @@ from starknet_py.net.gateway_client import GatewayClient
 from starknet_py.net.models import StarknetChainId
 from starknet_py.net.signer.stark_curve_signer import KeyPair
 
+from dao import config
 from dao.graphql.main import run_graphql
 from dao.indexer.main import run_indexer
 
-from . import config
 from .integration.test_utils import (
     default_new_events_handler_test,
     docker,
@@ -116,7 +116,7 @@ async def docker_compose_services(request: pytest.FixtureRequest) -> list[Contai
 
 @pytest.fixture(scope="session")
 def predeployed_accounts() -> list[Account]:
-    url = os.path.join(config.STARKNET_NETWORK_URL, "predeployed_accounts")
+    url = os.path.join(config.starknet_network_url, "predeployed_accounts")
     accounts = requests.get(url, timeout=5).json()
 
     return [
@@ -138,7 +138,7 @@ def predeployed_accounts() -> list[Account]:
 def client(
     docker_compose_services, predeployed_accounts: list[Account]
 ) -> AccountClient:
-    client = GatewayClient(config.STARKNET_NETWORK_URL)
+    client = GatewayClient(config.starknet_network_url)
 
     account = predeployed_accounts[0]
 
@@ -229,9 +229,9 @@ def run_indexer_process(
         process = Process(
             target=lambda: asyncio.run(
                 run_indexer(
-                    server_url=config.APIBARA_URL,
-                    mongo_url=config.MONGO_URL,
-                    starknet_network_url=config.STARKNET_NETWORK_URL,
+                    server_url=config.apibara_server_url,
+                    mongo_url=config.mongo_url,
+                    starknet_network_url=config.starknet_network_url,
                     ssl=False,
                     indexer_id=indexer_id,
                     new_events_handler=new_events_handler,
@@ -251,14 +251,14 @@ def run_indexer_process(
 @pytest.fixture(scope="session")
 def mongo_client(docker_compose_services) -> pymongo.MongoClient:
     # TODO: explore https://github.com/mongomock/mongomock
-    return pymongo.MongoClient(config.MONGO_URL, tz_aware=True)
+    return pymongo.MongoClient(config.mongo_url, tz_aware=True)
 
 
 # @pytest.fixture(scope="session")
 @pytest.fixture
 def mongomock_client(monkeypatch: MonkeyPatch) -> pymongo.MongoClient:
     monkeypatch.setenv("USING_MONGOMOCK", "true")
-    return mongomock.MongoClient(config.MONGO_URL, tz_aware=True)
+    return mongomock.MongoClient(config.mongo_url, tz_aware=True)
 
 
 @pytest.fixture
@@ -272,12 +272,12 @@ def run_graphql_process(
                 request.node.name + "_" + datetime.now().strftime("%Y_%m_%d_%H_%I_%M")
             )
 
-        host, port = config.GRAPHQL_URL.split(":")
+        host, port = config.graphql_url.split(":")
 
         process = Process(
             target=lambda: asyncio.run(
                 run_graphql(
-                    mongo_url=config.MONGO_URL,
+                    mongo_url=config.mongo_url,
                     db_name=db_name,
                     host=host,
                     port=int(port),

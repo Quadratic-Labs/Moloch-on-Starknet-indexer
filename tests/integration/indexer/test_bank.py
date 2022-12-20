@@ -117,7 +117,7 @@ async def test_token_unwhitelisted(
 
 
 @pytest.mark.parametrize(
-    "member_address", [constants.ACCOUNT_ADDRESS, config.BANK_ADDRESS]
+    "member_address", [constants.ACCOUNT_ADDRESS, config.bank_address]
 )
 async def test_balance_increased(
     member_address,
@@ -159,7 +159,7 @@ async def test_balance_increased(
     # our events were processed
     test_utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
 
-    if member_address == config.BANK_ADDRESS:
+    if member_address == config.bank_address:
         bank = list(mongo_db["bank"].find({"_chain.valid_to": None}))
         assert len(bank) == 1
         balances = bank[0]["balances"]
@@ -187,7 +187,7 @@ async def test_balance_increased(
 
 
 @pytest.mark.parametrize(
-    "member_address", [constants.ACCOUNT_ADDRESS, config.BANK_ADDRESS]
+    "member_address", [constants.ACCOUNT_ADDRESS, config.bank_address]
 )
 async def test_balance_decreased(
     member_address,
@@ -230,7 +230,7 @@ async def test_balance_decreased(
     # our events were processed
     test_utils.wait_for_indexer(mongo_db, transaction_receipt.block_number)
 
-    if member_address == config.BANK_ADDRESS:
+    if member_address == config.bank_address:
         bank = list(mongo_db["bank"].find({"_chain.valid_to": None}))
         assert len(bank) == 1
         balances = bank[0]["balances"]
@@ -263,7 +263,7 @@ async def get_transaction_datetime(client, transaction_receipt):
 
 
 @pytest.mark.parametrize(
-    "member_address", [constants.ACCOUNT_ADDRESS, config.BANK_ADDRESS]
+    "member_address", [constants.ACCOUNT_ADDRESS, config.bank_address]
 )
 async def test_balance_changes_multiple_times(
     member_address,
@@ -341,7 +341,7 @@ async def test_balance_changes_multiple_times(
     # our events were processed
     test_utils.wait_for_indexer(mongo_db, transaction_receipt4.block_number)
 
-    if member_address == config.BANK_ADDRESS:
+    if member_address == config.bank_address:
         bank = list(mongo_db["bank"].find({"_chain.valid_to": None}))
         assert len(bank) == 1
         balances = bank[0]["balances"]

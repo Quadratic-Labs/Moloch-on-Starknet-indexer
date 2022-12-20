@@ -6,7 +6,9 @@ from typing import Any, Optional
 from pymongo.database import Database
 from strawberry.types import Info
 
-from .. import config, utils
+from dao import config, utils
+
+from . import logger
 
 
 def list_members(info: Info, filter=None):
@@ -33,12 +35,14 @@ def get_votable_members_query(
             {
                 "$or": [
                     {"jailedAt": {"$exists": False}},
+                    {"jailedAt": None},
                     {"jailedAt": {"$gt": submitted_at}},
                 ]
             },
             {
                 "$or": [
                     {"exitedAt": {"$exists": False}},
+                    {"exitedAt": None},
                     {"exitedAt": {"$gt": submitted_at}},
                 ]
             },
@@ -121,11 +125,38 @@ def list_proposals(
 
 
 def get_bank(info: Info):
+    current_block_filter = {"_chain.valid_to": None}
+
     db: Database = info.context["db"]
+
     bank = db["bank"].find_one(
         {
-            "_chain.valid_to": None,
-            "bankAddress": utils.int_to_bytes(config.BANK_ADDRESS),
+            **current_block_filter,
+            "bankAddress": utils.int_to_bytes(config.bank_address),
         }
     )
+
+    total = db["members"].aggregate(
+        [
+            {"$match": current_block_filter},
+            {
+                "$group": {
+                    "_id": None,
+                    "totalShares": {"$sum": "$shares"},
+                    "totalLoot": {"$sum": "$loot"},
+                }
+            },
+        ]
+    )
+
+    total = list(total)
+
+    if total:
+        bank["totalShares"] = total[0]["totalShares"]
+        bank["totalLoot"] = total[0]["totalLoot"]
+    else:
+        logger.warning(
+            "Cannot compute totalShares and totalLoot, there is probably no members yet"
+        )
+
     return bank

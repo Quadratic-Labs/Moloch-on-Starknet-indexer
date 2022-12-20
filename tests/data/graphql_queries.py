@@ -69,9 +69,54 @@ LIST_PROPOSALS = """query Proposals {
 LIST_MEMBERS = """query Proposals {
   members {
     memberAddress
+    delegateAddress
     shares
     loot
+    percentageOfTreasury
+    votingWeight
     onboardedAt
+    roles
+    jailedAt
+    exitedAt
+    balances {
+      tokenName
+      tokenAddress
+      amount
+    }
+    transactions {
+      tokenAddress
+      timestamp
+      amount
+    }
+  }
+}
+"""
+
+BANK = """query Bank {
+  bank {
+    bankAddress
+    totalShares
+    totalLoot
+    whitelistedTokens {
+      tokenName
+      tokenAddress
+      whitelistedAt
+    }
+    unWhitelistedTokens {
+      tokenName
+      tokenAddress
+      unWhitelistedAt
+    }
+    balances {
+      tokenName
+      tokenAddress
+      amount
+    }
+    transactions {
+      tokenAddress
+      timestamp
+      amount
+    }
   }
 }
 """

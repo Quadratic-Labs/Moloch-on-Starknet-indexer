@@ -3,6 +3,8 @@ from starknet_py.contract import Contract
 from starknet_py.net.account.account_client import AccountClient
 from starknet_py.utils.data_transformer.data_transformer import CairoSerializer
 
+from dao import utils
+
 from .. import constants
 
 
@@ -120,5 +122,89 @@ async def test_member_updated(
     assert python_data.jailed == jailed
     assert python_data.lastProposalYesVote == lastProposalYesVote
     assert python_data.onboardedAt == onboardedAt
+
+    return transaction_receipt
+
+
+async def test_role_granted(
+    contract: Contract,
+    contract_events: dict,
+    client: AccountClient,
+    address=constants.ACCOUNT_ADDRESS,
+    role="admin",
+):
+    invoke_result = await contract.functions["Roles__grant_role_proxy"].invoke(
+        user=address,
+        role=role,
+        max_fee=10**16,
+    )
+
+    await invoke_result.wait_for_acceptance()
+
+    transaction_hash = invoke_result.hash
+    transaction_receipt = await client.get_transaction_receipt(transaction_hash)
+
+    # Takes events from transaction receipt
+    events = transaction_receipt.events
+
+    # Takes an abi of the event which data we want to serialize
+    # We can get it from the contract abi
+    emitted_event_abi = contract_events["RoleGranted"]
+
+    # Creates CairoSerializer with contract's identifier manager
+    cairo_serializer = CairoSerializer(
+        identifier_manager=contract.data.identifier_manager
+    )
+
+    # Transforms cairo data to python (needs types of the values and values)
+    python_data = cairo_serializer.to_python(
+        value_types=emitted_event_abi["data"], values=events[0].data
+    )
+
+    assert python_data.account == address
+    assert python_data.role == utils.str_to_felt(role)
+    assert python_data.sender == client.address
+
+    return transaction_receipt
+
+
+async def test_role_revoked(
+    contract: Contract,
+    contract_events: dict,
+    client: AccountClient,
+    address=constants.ACCOUNT_ADDRESS,
+    role="admin",
+):
+    invoke_result = await contract.functions["Roles__revoke_role_proxy"].invoke(
+        user=address,
+        role=role,
+        max_fee=10**16,
+    )
+
+    await invoke_result.wait_for_acceptance()
+
+    transaction_hash = invoke_result.hash
+    transaction_receipt = await client.get_transaction_receipt(transaction_hash)
+
+    # Takes events from transaction receipt
+    events = transaction_receipt.events
+
+    # Takes an abi of the event which data we want to serialize
+    # We can get it from the contract abi
+    emitted_event_abi = contract_events["RoleRevoked"]
+
+    # Creates CairoSerializer with contract's identifier manager
+    cairo_serializer = CairoSerializer(
+        identifier_manager=contract.data.identifier_manager
+    )
+
+    # Transforms cairo data to python (needs types of the values and values)
+    python_data = cairo_serializer.to_python(
+        value_types=emitted_event_abi["data"], values=events[0].data
+    )
+
+    assert python_data.account == address
+    assert python_data.role == utils.str_to_felt(role)
+    assert python_data.sender == client.address
 
     return transaction_receipt

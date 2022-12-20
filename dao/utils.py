@@ -37,31 +37,31 @@ def int_to_uint256_dict(a: int) -> dict[str, int]:
     return {"low": low, "high": high}
 
 
-def uint256_dict_to_int(a: dict[str, int]) -> int:
-    """Takes uint256-ish dict value, returns int value."""
-    return uint256_to_int((a["low"], a["high"]))
-
-
-def uint256_to_int(uint: tuple) -> int:
-    """Takes in uint256-ish tuple, returns value."""
-    return uint[0] + (uint[1] << 128)
-
-
 def int_to_bytes(a: int) -> bytes:
     length = (a.bit_length() + 7) // 8
     return a.to_bytes(length, byteorder="big")
 
 
-def bytes_to_int(a: bytes) -> int:
-    return int.from_bytes(a, "big")
+# def uint256_dict_to_int(a: dict[str, int]) -> int:
+#     """Takes uint256-ish dict value, returns int value."""
+#     return uint256_to_int((a["low"], a["high"]))
 
 
-def bytes_to_str(a: bytes) -> str:
-    return a.hex()
+# def uint256_to_int(uint: tuple) -> int:
+#     """Takes in uint256-ish tuple, returns value."""
+#     return uint[0] + (uint[1] << 128)
 
 
-def str_to_bytes(a: str) -> bytes:
-    return bytes.fromhex(a)
+# def bytes_to_int(a: bytes) -> int:
+#     return int.from_bytes(a, "big")
+
+
+# def bytes_to_str(a: bytes) -> str:
+#     return a.hex()
+
+
+# def str_to_bytes(a: str) -> bytes:
+#     return bytes.fromhex(a)
 
 
 def async_cached(cache, key=keys.hashkey):
@@ -74,27 +74,19 @@ def async_cached(cache, key=keys.hashkey):
     """
 
     def decorator(func):
-        if cache is None:
-
-            @wraps(func)
-            async def wrapper(*args, **kwargs):
-                return await func(*args, **kwargs)
-
-        else:
-
-            @wraps(func)
-            async def wrapper(*args, **kwargs):
-                k = key(*args, **kwargs)
-                try:
-                    return cache[k]
-                except KeyError:
-                    pass
-                v = await func(*args, **kwargs)
-                try:
-                    cache[k] = v
-                except ValueError:
-                    pass
-                return v
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            k = key(*args, **kwargs)
+            try:
+                return cache[k]
+            except KeyError:
+                pass
+            v = await func(*args, **kwargs)
+            try:
+                cache[k] = v
+            except ValueError:
+                pass
+            return v
 
         return wrapper
 

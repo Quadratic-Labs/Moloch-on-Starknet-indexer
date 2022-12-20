@@ -28,16 +28,16 @@ def cli():
 @cli.command()
 @click.option(
     "--server-url",
-    default=config.APIBARA_SERVER_URL,
+    default=config.apibara_server_url,
     show_default=True,
     help="Apibara stream url.",
 )
 @click.option(
-    "--mongo-url", default=config.MONGO_URL, show_default=True, help="MongoDB url."
+    "--mongo-url", default=config.mongo_url, show_default=True, help="MongoDB url."
 )
 @click.option(
     "--starknet-network-url",
-    default=config.STARKNET_NETWORK_URL,
+    default=config.starknet_network_url,
     show_default=True,
     help="Starknet Network url.",
 )
@@ -98,11 +98,11 @@ async def start_indexer(
 
 @cli.command()
 @click.option(
-    "--mongo-url", default=config.MONGO_URL, show_default=True, help="MongoDB URL."
+    "--mongo-url", default=config.mongo_url, show_default=True, help="MongoDB URL."
 )
 @click.option(
     "--db-name",
-    default=config.INDEXER_ID.replace("-", "_"),
+    default=config.indexer_id.replace("-", "_"),
     show_default=True,
     help="MongoDB database name.",
 )

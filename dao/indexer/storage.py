@@ -62,7 +62,7 @@ async def update_bank(
     if filter is None:
         filter = {}
 
-    bank_address = utils.int_to_bytes(config.BANK_ADDRESS)
+    bank_address = utils.int_to_bytes(config.bank_address)
 
     # Create bank if not exists
     if not await info.storage.find_one("bank", {"bankAddress": bank_address}):
@@ -85,7 +85,7 @@ async def get_bank(info: Info, filter: Optional[dict] = None):
     if filter is None:
         filter = {}
 
-    bank_address = utils.int_to_bytes(config.BANK_ADDRESS)
+    bank_address = utils.int_to_bytes(config.bank_address)
     bank = await info.storage.find_one("bank", {"bankAddress": bank_address, **filter})
     return bank
 
@@ -95,7 +95,7 @@ async def add_token_if_not_exists(
 ):
     token_address_filter = {"balances.tokenAddress": token_address}
 
-    bank_address = utils.int_to_bytes(config.BANK_ADDRESS)
+    bank_address = utils.int_to_bytes(config.bank_address)
     if member_address == bank_address:
         bank = await get_bank(info=info, filter=token_address_filter)
         # The bank doesn't have the token in its balances list
@@ -152,7 +152,7 @@ async def update_balance(
     token_address: bytes,
     amount: int,
 ):
-    bank_address = utils.int_to_bytes(config.BANK_ADDRESS)
+    bank_address = utils.int_to_bytes(config.bank_address)
     token_name = await get_token_name(token_address=token_address, info=info)
 
     await add_token_if_not_exists(
