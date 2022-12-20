@@ -14,7 +14,6 @@ from ..utils import (
     get_contract,
     get_contract_events,
     int_to_bytes,
-    uint256_dict_to_int,
 )
 
 
@@ -54,7 +53,6 @@ deserializers: dict[Type, Serializer] = {
     BlockNumber: deserialize_block_number,
     bytes: int_to_bytes,
     str: felt_to_str,
-    Uint256: uint256_dict_to_int,
 }
 
 
