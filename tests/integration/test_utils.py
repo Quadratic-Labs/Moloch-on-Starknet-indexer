@@ -10,7 +10,7 @@ from grpc_requests.aio import AsyncClient
 from pymongo.database import Database
 from python_on_whales import Container, DockerClient
 
-from .. import config
+from dao import config
 
 logger = logging.getLogger("tests")
 
@@ -30,7 +30,7 @@ def raise_timeout_error(details: dict):
 # if a container is not running (exited, paused, stopped) a RuntimeError will be raised
 @backoff.on_predicate(
     backoff.constant,
-    max_time=config.DEFAULT_MAX_BACKOFF_TIME,
+    max_time=config.default_max_backoff_time,
     on_giveup=raise_timeout_error,
 )
 async def wait_for_docker_services():
@@ -66,11 +66,11 @@ async def wait_for_docker_services():
 @backoff.on_exception(
     backoff.constant,
     requests.RequestException,
-    max_time=config.DEFAULT_MAX_BACKOFF_TIME,
+    max_time=config.default_max_backoff_time,
 )
 async def wait_for_devnet():
-    # TODO: think about using a async client here
-    url = os.path.join(config.STARKNET_NETWORK_URL, "is_alive")
+    # TODO: think about using an async client here
+    url = os.path.join(config.starknet_network_url, "is_alive")
     is_alive_response = requests.get(url, timeout=1)
     is_alive_response.raise_for_status()
 
@@ -79,28 +79,28 @@ async def wait_for_devnet():
 @backoff.on_exception(
     backoff.constant,
     requests.RequestException,
-    max_time=config.DEFAULT_MAX_BACKOFF_TIME,
+    max_time=config.default_max_backoff_time,
 )
 async def wait_for_graphql() -> bool:
     # TODO: use gql client instead
-    url = f"http://{config.GRAPHQL_URL}/graphql?query=%7B__typename%7D"
+    url = f"http://{config.graphql_url }/graphql?query=%7B__typename%7D"
     response = requests.get(url, timeout=1)
     response.raise_for_status()
     return True
 
 
 @backoff.on_exception(
-    backoff.constant, AioRpcError, max_time=config.DEFAULT_MAX_BACKOFF_TIME
+    backoff.constant, AioRpcError, max_time=config.default_max_backoff_time
 )
 async def wait_for_apibara():
-    grpc_client = AsyncClient(config.APIBARA_URL, ssl=False)
+    grpc_client = AsyncClient(config.apibara_server_url, ssl=False)
     node_service = await grpc_client.service("apibara.node.v1alpha1.Node")
     return await node_service.Status()
 
 
 @backoff.on_predicate(
     backoff.constant,
-    max_time=config.WAIT_FOR_INDEXER_BACKOFF_TIME,
+    max_time=config.wait_for_indexer_backoff_time,
     on_giveup=raise_timeout_error,
 )
 def wait_for_indexer(mongo_db: Database, block_number: int):

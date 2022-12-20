@@ -10,7 +10,7 @@ from . import logger
 
 def parse_hex(value: str) -> bytes:
     if not value.startswith("0x"):
-        raise ValueError("invalid Hex value")
+        raise ValueError(f"'{value}' isn't a valid hex value, it should start with 0x")
     return bytes.fromhex(value.replace("0x", ""))
 
 

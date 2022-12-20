@@ -20,7 +20,7 @@ async def run_indexer(
     filters: list[EventFilter],
     ssl=True,
     restart: bool = False,
-    indexer_id: str = config.INDEXER_ID,
+    indexer_id: str = config.indexer_id,
     new_events_handler=default_new_events_handler,
 ):
     logger.info(

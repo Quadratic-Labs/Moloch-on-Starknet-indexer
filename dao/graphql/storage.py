@@ -6,7 +6,8 @@ from typing import Any, Optional
 from pymongo.database import Database
 from strawberry.types import Info
 
-from .. import config, utils
+from dao import config, utils
+
 from . import logger
 
 
@@ -131,7 +132,7 @@ def get_bank(info: Info):
     bank = db["bank"].find_one(
         {
             **current_block_filter,
-            "bankAddress": utils.int_to_bytes(config.BANK_ADDRESS),
+            "bankAddress": utils.int_to_bytes(config.bank_address),
         }
     )
 
