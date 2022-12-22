@@ -1,12 +1,46 @@
 from datetime import timedelta
 from unittest.mock import Mock
 
+import pytest
 from pymongo import MongoClient
+from pymongo.errors import DuplicateKeyError
 
 from dao import utils
 from dao.graphql import storage
 
 from . import data
+
+
+def test_unique_member_address(mongomock_client: MongoClient):
+    storage.init_db(mongomock_client.db)
+    member = {"memberAddress": "0x1"}
+    mongomock_client.db.members.insert_one(member)
+    with pytest.raises(DuplicateKeyError):
+        mongomock_client.db.members.insert_one(member)
+
+
+def test_unique_proposal_id(mongomock_client: MongoClient):
+    storage.init_db(mongomock_client.db)
+    proposal = {"id": 1}
+    mongomock_client.db.proposals.insert_one(proposal)
+    with pytest.raises(DuplicateKeyError):
+        mongomock_client.db.proposals.insert_one(proposal)
+
+
+def test_unique_proposal_type(mongomock_client: MongoClient):
+    storage.init_db(mongomock_client.db)
+    proposal_param = {"type": 1}
+    mongomock_client.db.proposal_params.insert_one(proposal_param)
+    with pytest.raises(DuplicateKeyError):
+        mongomock_client.db.proposal_params.insert_one(proposal_param)
+
+
+def test_unique_bank_address(mongomock_client: MongoClient):
+    storage.init_db(mongomock_client.db)
+    bank = {"bankAddress": "0x1"}
+    mongomock_client.db.bank.insert_one(bank)
+    with pytest.raises(DuplicateKeyError):
+        mongomock_client.db.bank.insert_one(bank)
 
 
 def test_list_members(mongomock_client: MongoClient):

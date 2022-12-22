@@ -11,6 +11,13 @@ from dao import config, utils
 from . import logger
 
 
+def init_db(db: Database):
+    db["proposals"].create_index("id", unique=True)
+    db["proposal_params"].create_index("type", unique=True)
+    db["members"].create_index("memberAddress", unique=True)
+    db["bank"].create_index("bankAddress", unique=True)
+
+
 def list_members(info: Info, filter=None):
     if filter is None:
         filter = {}

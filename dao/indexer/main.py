@@ -6,6 +6,7 @@ from apibara.model import BlockHeader, EventFilter, StarkNetEvent
 from starknet_py.net.gateway_client import GatewayClient
 
 from dao import config
+from dao.graphql import storage
 from dao.indexer import logger
 from dao.indexer.handler import default_new_events_handler
 
@@ -45,6 +46,9 @@ async def run_indexer(
         indexer_id=indexer_id,
         new_events_handler=new_events_handler,
     )
+
+    # pylint: disable=protected-access
+    storage.init_db(runner._indexer_storage.db)
 
     runner.set_context(
         {
