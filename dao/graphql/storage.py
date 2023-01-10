@@ -13,22 +13,22 @@ from dao import config, utils
 from . import logger
 
 
-def create_proposals_with_validators(db: Database):
+def create_collection_with_validators(db: Database, collection: str):
     here = Path(__file__)
     validators_dir = here.parent.parent / "indexer" / "validators"
 
     collections = db.list_collection_names()
 
     with open(
-        validators_dir / "proposals_validator.json",
+        validators_dir / f"{collection}_validator.json",
         encoding="utf-8",
     ) as f:
-        proposals_validator = json.load(f)
+        collection_validator = json.load(f)
 
-    if "proposals" not in collections:
-        db.create_collection("proposals", validator=proposals_validator)
+    if collection not in collections:
+        db.create_collection(collection, validator=collection_validator)
     else:
-        db.command("collMod", "proposals", validator=proposals_validator)
+        db.command("collMod", collection, validator=collection_validator)
 
 
 def create_indexes(db: Database):
@@ -43,7 +43,10 @@ def init_db(db: Database):
 
     # mongomock doesn't support validators
     if os.getenv("USING_MONGOMOCK", "").lower() != "true":
-        create_proposals_with_validators(db)
+        create_collection_with_validators(db, "proposals")
+        create_collection_with_validators(db, "proposal_params")
+        create_collection_with_validators(db, "members")
+        create_collection_with_validators(db, "bank")
 
     create_indexes(db)
 

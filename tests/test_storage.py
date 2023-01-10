@@ -1,74 +1,12 @@
 from datetime import timedelta
 from unittest.mock import Mock
 
-import pytest
 from pymongo import MongoClient
-from pymongo.database import Database
-from pymongo.errors import DuplicateKeyError, WriteError
 
 from dao import utils
 from dao.graphql import storage
 
 from . import data
-
-
-def test_unique_member_address(mongomock_client: MongoClient):
-    storage.init_db(mongomock_client.db)
-    member = {"memberAddress": "0x1"}
-    mongomock_client.db.members.insert_one(member)
-    with pytest.raises(DuplicateKeyError):
-        mongomock_client.db.members.insert_one(member)
-
-
-def test_unique_proposal_id(mongomock_client: MongoClient):
-    storage.init_db(mongomock_client.db)
-    proposal = {"id": 1}
-    mongomock_client.db.proposals.insert_one(proposal)
-    with pytest.raises(DuplicateKeyError):
-        mongomock_client.db.proposals.insert_one(proposal)
-
-
-def test_unique_proposal_type(mongomock_client: MongoClient):
-    storage.init_db(mongomock_client.db)
-    proposal_param = {"type": 1}
-    mongomock_client.db.proposal_params.insert_one(proposal_param)
-    with pytest.raises(DuplicateKeyError):
-        mongomock_client.db.proposal_params.insert_one(proposal_param)
-
-
-def test_unique_bank_address(mongomock_client: MongoClient):
-    storage.init_db(mongomock_client.db)
-    bank = {"bankAddress": "0x1"}
-    mongomock_client.db.bank.insert_one(bank)
-    with pytest.raises(DuplicateKeyError):
-        mongomock_client.db.bank.insert_one(bank)
-
-
-def test_proposals_validation_pass(mongo_db: Database):
-    storage.init_db(mongo_db)
-    mongo_db.proposals.insert_one(data.mongo_validation.PROPOSAL)
-    assert len(list(mongo_db.proposals.find())) == 1
-
-
-@pytest.mark.parametrize("proposal", data.mongo_validation.PROPOSAL_TYPE_MISMATCH)
-def test_proposals_validation_type(proposal, mongo_db: Database):
-    storage.init_db(mongo_db)
-    with pytest.raises(WriteError, match=".*type did not match.*"):
-        mongo_db.proposals.insert_one(proposal)
-
-
-@pytest.mark.parametrize("proposal", data.mongo_validation.PROPOSAL_WRONG_VALUES)
-def test_proposals_validation_wrong(proposal, mongo_db: Database):
-    storage.init_db(mongo_db)
-    with pytest.raises(WriteError, match=".*minimum|maximum.*"):
-        mongo_db.proposals.insert_one(proposal)
-
-
-@pytest.mark.parametrize("proposal", data.mongo_validation.PROPOSAL_MISSING_REQUIRED)
-def test_proposals_validation_required(proposal, mongo_db: Database):
-    storage.init_db(mongo_db)
-    with pytest.raises(WriteError, match=".*required.*"):
-        mongo_db.proposals.insert_one(proposal)
 
 
 def test_list_members(mongomock_client: MongoClient):

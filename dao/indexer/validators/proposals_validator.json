@@ -13,8 +13,8 @@
             "quorum",
             "votingDuration",
             "graceDuration",
-            "status",
-            "statusHistory"
+            "rawStatus",
+            "rawStatusHistory"
         ],
         "properties": {
             "id": {
@@ -53,11 +53,12 @@
                 "bsonType": "int",
                 "minimum": 0
             },
-            "status": {
+            "rawStatus": {
                 "bsonType": "string"
             },
-            "statusHistory": {
+            "rawStatusHistory": {
                 "bsonType": "array",
+                "uniqueItems": true,
                 "items": {
                     "bsonType": "array",
                     "items": [
@@ -68,6 +69,20 @@
                             "bsonType": "date"
                         }
                     ]
+                }
+            },
+            "yesVoters": {
+                "bsonType": "array",
+                "uniqueItems": true,
+                "items": {
+                    "bsonType": "binData"
+                }
+            },
+            "noVoters": {
+                "bsonType": "array",
+                "uniqueItems": true,
+                "items": {
+                    "bsonType": "binData"
                 }
             },
             "applicantAddress": {

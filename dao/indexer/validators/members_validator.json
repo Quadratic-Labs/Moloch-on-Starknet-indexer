@@ -1,0 +1,107 @@
+{
+    "$jsonSchema": {
+        "bsonType": "object",
+        "description": "Document describing a member",
+        "required": [
+            "memberAddress",
+            "delegateAddress",
+            "shares",
+            "loot",
+            "onboardedAt"
+        ],
+        "properties": {
+            "memberAddress": {
+                "bsonType": "binData"
+            },
+            "delegateAddress": {
+                "bsonType": "binData"
+            },
+            "shares": {
+                "bsonType": "int",
+                "minimum": 0
+            },
+            "loot": {
+                "bsonType": "int",
+                "minimum": 0
+            },
+            "onboardedAt": {
+                "bsonType": "date"
+            },
+            "exitedAt": {
+                "bsonType": [
+                    "date",
+                    "null"
+                ]
+            },
+            "jailedAt": {
+                "bsonType": [
+                    "date",
+                    "null"
+                ]
+            },
+            "yesVotes": {
+                "bsonType": "array",
+                "uniqueItems": true,
+                "items": {
+                    "bsonType": "int"
+                }
+            },
+            "noVotes": {
+                "bsonType": "array",
+                "uniqueItems": true,
+                "items": {
+                    "bsonType": "int"
+                }
+            },
+            "roles": {
+                "bsonType": "array",
+                "uniqueItems": true,
+                "items": {
+                    "bsonType": "string"
+                }
+            },
+            "balances": {
+                "bsonType": "array",
+                "uniqueItems": true,
+                "items": {
+                    "bsonType": "object",
+                    "required": [
+                        "tokenName",
+                        "tokenAddress"
+                    ],
+                    "properties": {
+                        "tokenName": {
+                            "bsonType": "string"
+                        },
+                        "tokenAddress": {
+                            "bsonType": "binData"
+                        }
+                    }
+                }
+            },
+            "transactions": {
+                "bsonType": "array",
+                "uniqueItems": true,
+                "items": {
+                    "bsonType": "object",
+                    "required": [
+                        "tokenAddress",
+                        "timestamp",
+                        "amount"
+                    ],
+                    "properties": {
+                        "tokenAddress": {
+                            "bsonType": "binData"
+                        },
+                        "timestamp": {
+                            "bsonType": "date"
+                        },
+                        "amount": {
+                            "bsonType": "int"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
