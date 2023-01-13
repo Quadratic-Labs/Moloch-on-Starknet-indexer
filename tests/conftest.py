@@ -9,10 +9,11 @@ from pathlib import Path
 from typing import Any, Callable, Optional
 
 import mongomock
-import pymongo
 import pytest
 import requests
 from apibara import EventFilter
+from pymongo import MongoClient
+from pymongo.database import Database
 from pytest import Item, MonkeyPatch
 from python_on_whales import Container
 from starknet_py.compile.compiler import Compiler
@@ -224,7 +225,7 @@ def run_indexer_process(
         indexer_id = (
             request.function.__name__
             + "_"
-            + datetime.now().strftime("%Y_%m_%d_%H_%I_%M_%f")
+            + datetime.now().strftime("%d%bT%Hh%Im%Ms%f")[:-3]
         )
         process = Process(
             target=lambda: asyncio.run(
@@ -249,16 +250,29 @@ def run_indexer_process(
 
 
 @pytest.fixture(scope="session")
-def mongo_client(docker_compose_services) -> pymongo.MongoClient:
+def mongo_client(docker_compose_services) -> MongoClient:
     # TODO: explore https://github.com/mongomock/mongomock
-    return pymongo.MongoClient(config.mongo_url, tz_aware=True)
+    return MongoClient(config.mongo_url, tz_aware=True)
 
 
 # @pytest.fixture(scope="session")
 @pytest.fixture
-def mongomock_client(monkeypatch: MonkeyPatch) -> pymongo.MongoClient:
+def mongomock_client(monkeypatch: MonkeyPatch) -> MongoClient:
     monkeypatch.setenv("USING_MONGOMOCK", "true")
     return mongomock.MongoClient(config.mongo_url, tz_aware=True)
+
+
+@pytest.fixture
+def mongo_db(request: pytest.FixtureRequest, mongo_client: MongoClient) -> Database:
+    db_name = (
+        request.function.__name__
+        + "_"
+        + datetime.now().strftime("%d%bT%Hh%Im%Ms%f")[:-3]
+    )
+
+    yield mongo_client[db_name]
+
+    mongo_client.drop_database(db_name)
 
 
 @pytest.fixture
@@ -269,7 +283,9 @@ def run_graphql_process(
     def _create_graphql(db_name: Optional[str] = None) -> GraphQL:
         if db_name is None:
             db_name = (
-                request.node.name + "_" + datetime.now().strftime("%Y_%m_%d_%H_%I_%M")
+                request.node.name
+                + "_"
+                + datetime.now().strftime("%d%bT%Hh%Im%Ms%f")[:-3]
             )
 
         host, port = config.graphql_url.split(":")

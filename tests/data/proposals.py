@@ -1,5 +1,14 @@
 from . import common
 
+PROPOSAL_PARAMS = {
+    "type": "Signaling",
+    "majority": 50,
+    "quorum": 80,
+    "votingDuration": 5,
+    "graceDuration": 15,
+}
+
+
 PROPOSALS = [
     {
         "id": 0,

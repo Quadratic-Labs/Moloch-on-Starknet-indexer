@@ -1,0 +1,124 @@
+{
+    "$jsonSchema": {
+        "bsonType": "object",
+        "description": "Document describing a proposal",
+        "required": [
+            "id",
+            "title",
+            "type",
+            "link",
+            "submittedAt",
+            "submittedBy",
+            "majority",
+            "quorum",
+            "votingDuration",
+            "graceDuration",
+            "rawStatus",
+            "rawStatusHistory"
+        ],
+        "properties": {
+            "id": {
+                "bsonType": "int"
+            },
+            "title": {
+                "bsonType": "string"
+            },
+            "type": {
+                "bsonType": "string"
+            },
+            "link": {
+                "bsonType": "string"
+            },
+            "submittedAt": {
+                "bsonType": "date"
+            },
+            "submittedBy": {
+                "bsonType": "binData"
+            },
+            "majority": {
+                "bsonType": "int",
+                "minimum": 0,
+                "maximum": 100
+            },
+            "quorum": {
+                "bsonType": "int",
+                "minimum": 0,
+                "maximum": 100
+            },
+            "votingDuration": {
+                "bsonType": "int",
+                "minimum": 0
+            },
+            "graceDuration": {
+                "bsonType": "int",
+                "minimum": 0
+            },
+            "rawStatus": {
+                "bsonType": "string"
+            },
+            "rawStatusHistory": {
+                "bsonType": "array",
+                "uniqueItems": true,
+                "items": {
+                    "bsonType": "array",
+                    "items": [
+                        {
+                            "bsonType": "string"
+                        },
+                        {
+                            "bsonType": "date"
+                        }
+                    ]
+                }
+            },
+            "yesVoters": {
+                "bsonType": "array",
+                "uniqueItems": true,
+                "items": {
+                    "bsonType": "binData"
+                }
+            },
+            "noVoters": {
+                "bsonType": "array",
+                "uniqueItems": true,
+                "items": {
+                    "bsonType": "binData"
+                }
+            },
+            "applicantAddress": {
+                "bsonType": "binData"
+            },
+            "shares": {
+                "bsonType": "int",
+                "minimum": 0
+            },
+            "loot": {
+                "bsonType": "int",
+                "minimum": 0
+            },
+            "tributeOffered": {
+                "bsonType": "int",
+                "minimum": 0
+            },
+            "tributeAddress": {
+                "bsonType": "binData"
+            },
+            "memberAddress": {
+                "bsonType": "binData"
+            },
+            "tokenName": {
+                "bsonType": "string"
+            },
+            "tokenAddress": {
+                "bsonType": "binData"
+            },
+            "paymentAddress": {
+                "bsonType": "binData"
+            },
+            "paymentRequested": {
+                "bsonType": "int",
+                "minimum": 0
+            }
+        }
+    }
+}

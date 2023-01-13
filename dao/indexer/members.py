@@ -19,7 +19,7 @@ class VoteSubmitted(BaseEvent):
     async def _handle(
         self, info: Info, block: BlockHeader, starknet_event: StarkNetEvent
     ):
-        # TODO: store both calledAddress and onBehalfAddress, we'll need to know
+        # TODO: store both callerAddress and onBehalfAddress, we'll need to know
         # who voted at some point
         if self.vote:
             update_proposal_vote = {"$push": {"yesVoters": self.onBehalfAddress}}

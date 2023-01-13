@@ -1,6 +1,8 @@
 # pylint: disable=redefined-builtin
+import json
 import os
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Optional
 
 from pymongo.database import Database
@@ -9,6 +11,44 @@ from strawberry.types import Info
 from dao import config, utils
 
 from . import logger
+
+
+def create_collection_with_validators(db: Database, collection: str):
+    here = Path(__file__)
+    validators_dir = here.parent.parent / "indexer" / "validators"
+
+    collections = db.list_collection_names()
+
+    with open(
+        validators_dir / f"{collection}_validator.json",
+        encoding="utf-8",
+    ) as f:
+        collection_validator = json.load(f)
+
+    if collection not in collections:
+        db.create_collection(collection, validator=collection_validator)
+    else:
+        db.command("collMod", collection, validator=collection_validator)
+
+
+def create_indexes(db: Database):
+    db["proposals"].create_index("id", unique=True)
+    db["proposal_params"].create_index("type", unique=True)
+    db["members"].create_index("memberAddress", unique=True)
+    db["bank"].create_index("bankAddress", unique=True)
+
+
+def init_db(db: Database):
+    logger.info("Init db=%s, collections=%s", db.name, db.list_collection_names())
+
+    # mongomock doesn't support validators
+    if os.getenv("USING_MONGOMOCK", "").lower() != "true":
+        create_collection_with_validators(db, "proposals")
+        create_collection_with_validators(db, "proposal_params")
+        create_collection_with_validators(db, "members")
+        create_collection_with_validators(db, "bank")
+
+    create_indexes(db)
 
 
 def list_members(info: Info, filter=None):

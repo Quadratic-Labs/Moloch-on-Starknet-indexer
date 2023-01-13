@@ -1,0 +1,104 @@
+{
+    "$jsonSchema": {
+        "bsonType": "object",
+        "description": "Document describing the bank",
+        "required": [
+            "bankAddress"
+        ],
+        "properties": {
+            "bankAddress": {
+                "bsonType": "binData"
+            },
+            "whitelistedTokens": {
+                "bsonType": "array",
+                "uniqueItems": true,
+                "items": {
+                    "bsonType": "object",
+                    "uniqueItems": true,
+                    "required": [
+                        "tokenName",
+                        "tokenAddress",
+                        "whitelistedAt"
+                    ],
+                    "properties": {
+                        "tokenName": {
+                            "bsonType": "string"
+                        },
+                        "tokenAddress": {
+                            "bsonType": "binData"
+                        },
+                        "whitelistedAt": {
+                            "bsonType": "date"
+                        }
+                    }
+                }
+            },
+            "unWhitelistedTokens": {
+                "bsonType": "array",
+                "uniqueItems": true,
+                "items": {
+                    "bsonType": "object",
+                    "uniqueItems": true,
+                    "required": [
+                        "tokenName",
+                        "tokenAddress",
+                        "unWhitelistedAt"
+                    ],
+                    "properties": {
+                        "tokenName": {
+                            "bsonType": "string"
+                        },
+                        "tokenAddress": {
+                            "bsonType": "binData"
+                        },
+                        "unWhitelistedAt": {
+                            "bsonType": "date"
+                        }
+                    }
+                }
+            },
+            "balances": {
+                "bsonType": "array",
+                "uniqueItems": true,
+                "items": {
+                    "bsonType": "object",
+                    "required": [
+                        "tokenName",
+                        "tokenAddress"
+                    ],
+                    "properties": {
+                        "tokenName": {
+                            "bsonType": "string"
+                        },
+                        "tokenAddress": {
+                            "bsonType": "binData"
+                        }
+                    }
+                }
+            },
+            "transactions": {
+                "bsonType": "array",
+                "uniqueItems": true,
+                "items": {
+                    "bsonType": "object",
+                    "required": [
+                        "tokenAddress",
+                        "timestamp",
+                        "amount"
+                    ],
+                    "properties": {
+                        "tokenAddress": {
+                            "bsonType": "binData"
+                        },
+                        "timestamp": {
+                            "bsonType": "date"
+                        },
+                        "amount": {
+                            "bsonType": "int"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

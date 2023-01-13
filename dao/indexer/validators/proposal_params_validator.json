@@ -1,0 +1,36 @@
+{
+    "$jsonSchema": {
+        "bsonType": "object",
+        "description": "Document describing proposal params",
+        "required": [
+            "type",
+            "majority",
+            "quorum",
+            "votingDuration",
+            "graceDuration"
+        ],
+        "properties": {
+            "type": {
+                "bsonType": "string"
+            },
+            "majority": {
+                "bsonType": "int",
+                "minimum": 0,
+                "maximum": 100
+            },
+            "quorum": {
+                "bsonType": "int",
+                "minimum": 0,
+                "maximum": 100
+            },
+            "votingDuration": {
+                "bsonType": "int",
+                "minimum": 0
+            },
+            "graceDuration": {
+                "bsonType": "int",
+                "minimum": 0
+            }
+        }
+    }
+}
