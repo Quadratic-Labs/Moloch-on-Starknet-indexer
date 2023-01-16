@@ -1,43 +1,41 @@
-# Web3 Indexer with Apibara
 
-This repository uses [Apibara](https://github.com/apibara/apibara) to index web3 data.
+# Moloch on Starknet indexer
 
+<details open ="open">
+<summary>Table of Contents</summary>
 
-## Getting Started
+- [About](#about)
+- [Warning](#warning)
+- [Technical Architecure Overview](#technical-architecture-overview)
 
-Create a new virtual environment for this project. While this step is not required, it is _highly recommended_ to avoid conflicts between different installed packages.
+</details>
 
-    python3 -m venv venv
+## About
 
-Then activate the virtual environment.
+>**Moloch on Starknet indexer** is an Apibara based indexer managing the streaming, the storage and the querying of Moloch on Starknet events and data.
 
-    source venv/bin/activate
+It is based on [Apibara python indexer Template](https://github.com/apibara/python-indexer-template), which enables to quickly start indexing smart contracts events with Apibara.
 
-Then install `poetry` and use it to install the package dependencies.
+Hence this repository uses [Apibara](https://github.com/apibara/apibara) to index the web3 data.
 
-    python3 -m pip install poetry
-    poetry install
+## Warning
 
-Start MongoDB using the provided `docker-compose` file:
+It is work in progress, do not use in production.
 
-    docker-compose up
+> As Moloch on Starknet Smart Contracts, which are currently developed on Cairo 0.10, will be ported on Cairo 1.0. at regenesis, the indexer will be udpated accordingly.
 
-Notice that you can use any managed MongoDB like MongoDB Atlas.
+## Technical Architecture Overview
 
-Then start the indexer by running the `indexer start` command. The `indexer` command runs the cli application defined in `src/indexer/main.py`. This is a standard Click application.
+Indexing is managed through Apibara which is a framework and protocol to build composable streams of Web3 data.
 
-Notice that by default the indexer will start indexing from where it left off in the previous run. If you want restart, use the `--restart` flag.
+The contracts emit several events that are read and transformed by the Apibara Indexer, stored into mongoDB and queryable through GraphQL.
 
-    indexer start --restart
+<div align="center">
+  <img src="docs/architecture/architecture-overview.png">
+</div>
 
-Notice that will also delete the database with the indexer's data.
+>The list of events emitted by the Cairo Smart Contracts can be found [here](https://dao-docs.quadratic-labs.com/moloch-on-starknet/technical-architecture/events-list)
 
+>An overview of the indexed data structure can be found [here](https://dao-docs.quadratic-labs.com/moloch-on-starknet/technical-architecture/indexed-data-structure)
 
-## Customizing the template
-
-You can change the id of the indexer by changing the value of the `indexer_id` variable in `src/indexer/indexer.py`. This id is also used as the name of the Mongo database where the indexer data is stored.
-
-
-## Running in production
-
-This template includes a `Dockerfile` that you can use to package the indexer for production usage.
+>The list of the transformations operated through GraphQL can be found [here](https://dao-docs.quadratic-labs.com/moloch-on-starknet/technical-architecture/graphql-api)
