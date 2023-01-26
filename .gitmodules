@@ -1,4 +1,4 @@
 [submodule "cairo-contracts"]
 	path = cairo-contracts
-	url = git@github.com:quadratic-labs/DaoContracts.git
+	url = git@github.com:Quadratic-Labs/Moloch-on-Starknet.git
 	branch = develop
